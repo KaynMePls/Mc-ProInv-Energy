@@ -1,0 +1,113 @@
+{% extends "base.html" %} {% block content %}
+<div class="container mt-5">
+    <div class="row justify-content-end mb-3">
+        <div class="col-lg-10 col-md-12 text-end">
+
+            </a>
+            <a href="{{ url_for('contabilidad.exportar_word') }}" class="btn btn-outline-primary btn-sm rounded-pill fw-semibold me-2" target="_blank">
+                <i class="bi bi-file-earmark-word me-1"></i>Exportar Word
+            </a>
+            <a href="{{ url_for('contabilidad.dashboard') }}" class="btn btn-outline-secondary btn-sm rounded-pill fw-semibold">
+                <i class="bi bi-arrow-left-circle me-1"></i>Regresar al Dashboard
+            </a>
+        </div>
+    </div>
+    <div class="row justify-content-center">
+        <div class="col-lg-10 col-md-12">
+            <div class="card shadow-lg border-0 rounded-4">
+                <div class="card-header bg-gradient bg-primary text-white d-flex align-items-center gap-3 rounded-top-4 py-3 px-4">
+                    <img src="{{ url_for('static', filename='Solarium.png') }}" alt="Logo Empresa" style="height:100px; width:auto; border-radius:10px; box-shadow:0 2px 8px rgba(0,0,0,0.10);">
+                    <span class="fw-bold fs-5">
+                        <i class="bi bi-file-earmark-bar-graph me-2"></i>Reporte Contable
+                    </span>
+                </div>
+                <div class="card-body px-4 py-4 bg-white">
+                    <div class="row g-4 mb-3">
+                        <div class="col-md-4">
+                            <div class="card border-0 shadow-sm rounded-4 bg-success-subtle text-success h-100">
+                                <div class="card-body text-center py-3">
+                                    <i class="bi bi-arrow-down-circle fs-2"></i>
+                                    <h6 class="fw-bold mt-2">Ingresos</h6>
+                                    <h4 class="fw-bold">${{ '{:,.0f}'.format(total_ingresos) }}</h4>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card border-0 shadow-sm rounded-4 bg-danger-subtle text-danger h-100">
+                                <div class="card-body text-center py-3">
+                                    <i class="bi bi-arrow-up-circle fs-2"></i>
+                                    <h6 class="fw-bold mt-2">Egresos</h6>
+                                    <h4 class="fw-bold">${{ '{:,.0f}'.format(total_egresos) }}</h4>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card border-0 shadow-sm rounded-4 {% if balance_neto >= 0 %}bg-primary-subtle text-primary{% else %}bg-warning-subtle text-warning{% endif %} h-100">
+                                <div class="card-body text-center py-3">
+                                    <i class="bi bi-calculator fs-2 {% if balance_neto >= 0 %}text-primary{% else %}text-warning{% endif %}"></i>
+                                    <h6 class="fw-bold mt-2">Balance Neto</h6>
+                                    <h4 class="fw-bold {% if balance_neto >= 0 %}text-primary{% else %}text-warning{% endif %}">${{ '{:,.0f}'.format(balance_neto) }}</h4>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="alert alert-info mt-4 rounded-4 shadow-sm">
+                        <h5 class="fw-bold mb-2"><i class="bi bi-chat-dots me-2"></i>Mensaje para Administrador y CEO</h5>
+                        <ul class="mb-1">
+                            {% if total_ingresos > total_egresos %}
+                            <li><span class="fw-semibold text-success">Positivo:</span> La empresa presenta un balance positivo, los ingresos superan los egresos.</li>
+                            {% else %}
+                            <li><span class="fw-semibold text-warning">Problema:</span> Los egresos superan los ingresos, se recomienda revisar gastos y optimizar recursos.</li>
+                            {% endif %} {% if total_egresos > (total_ingresos * porcentaje_egreso) %}
+                            <li><span class="fw-semibold text-danger">Alerta:</span> El porcentaje de egresos es alto respecto a los ingresos.</li>
+                            {% endif %} {% if transacciones|length == 0 %}
+                            <li><span class="fw-semibold text-muted">Observación:</span> No hay transacciones registradas en el periodo.</li>
+                            {% else %}
+                            <li><span class="fw-semibold text-primary">Actividad:</span> Se han registrado {{ transacciones|length }} transacciones en el periodo.</li>
+                            {% endif %}
+                        </ul>
+                        <div class="small text-muted">Este mensaje se genera automáticamente para la toma de decisiones estratégicas.</div>
+                    </div>
+                    <div class="table-responsive mt-4">
+                        <table class="table table-hover align-middle rounded-4 overflow-hidden">
+                            <thead class="table-primary">
+                                <tr>
+                                    <th class="text-center">Fecha</th>
+                                    <th class="text-center">Tipo</th>
+                                    <th class="text-center">Monto</th>
+                                    <th class="text-center">Categoría</th>
+                                    <th class="text-center">Descripción</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for t in transacciones %}
+                                <tr>
+                                    <td class="text-center">{{ t.fecha.strftime('%Y-%m-%d') }}</td>
+                                    <td class="text-center">
+                                        <span class="badge px-3 py-2 {% if t.tipo == 'ingreso' %}bg-success{% else %}bg-danger{% endif %} text-white rounded-pill">{{ t.tipo|capitalize }}</span>
+                                    </td>
+                                    <td class="text-center fw-bold">${{ '{:,.0f}'.format(t.monto) }}</td>
+                                    <td class="text-center">
+                                        <span class="badge bg-info text-dark rounded-pill px-3 py-2">{{ t.categoria }}</span>
+                                    </td>
+                                    <td class="text-center">
+                                        <span title="{{ t.descripcion }}">{{ t.descripcion[:40] }}{% if t.descripcion|length > 40 %}...{% endif %}</span>
+                                    </td>
+                                </tr>
+                                {% else %}
+                                <tr>
+                                    <td colspan="5" class="text-center text-muted">No hay transacciones registradas.</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="card-footer bg-light rounded-bottom-4 text-end small text-muted px-4 py-2">
+                    <i class="bi bi-shield-check"></i> Reporte generado el {{ now.strftime('%d/%m/%Y %H:%M') }} | <i class="bi bi-envelope"></i> Soporte: <a href="mailto:andrewcipal@gmail.com" class="text-decoration-none text-primary">info@solarium.com</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css"> {% endblock %}

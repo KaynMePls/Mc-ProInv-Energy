@@ -1,0 +1,224 @@
+{% extends "base.html" %}
+{% block content %}
+<style>
+    .card-gradient {
+        box-shadow: 0 2px 16px rgba(0,0,0,0.07);
+        border-radius: 1.5rem;
+        border: none;
+    }
+    .table thead th {
+        background: linear-gradient(90deg,#e9ecef,#f8f9fa);
+        font-weight: 600;
+        font-size: 1rem;
+        border-bottom: 2px solid #dee2e6;
+    }
+    .table-hover tbody tr:hover {
+        background-color: #f1f3f6;
+        transition: background 0.2s;
+    }
+    .badge {
+        font-size: 1rem;
+        box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+    }
+    .chart-card {
+        background: linear-gradient(90deg,#f8fafc 60%,#e9f7ef 100%);
+        border-radius: 1.5rem;
+        box-shadow: 0 2px 16px rgba(0,0,0,0.07);
+        border: none;
+    }
+</style>
+<div class="container-fluid px-0">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="text-primary fw-bold mb-0">
+            <i class="bi bi-cash-coin"></i> Contabilidad General
+        </h2>
+        <a href="{{ url_for('auth.logout') }}" class="btn btn-outline-danger rounded-pill">
+            <i class="bi bi-box-arrow-right"></i> Cerrar sesión
+        </a>
+    </div>
+
+    <!-- Filtros y buscador -->
+    <div class="card card-gradient mb-4">
+        <div class="card-body">
+            <form method="get" class="row g-3 align-items-end">
+                <div class="col-lg-2 col-md-4">
+                    <select name="tipo" class="form-select rounded-pill">
+                        <option value="">Todos</option>
+                        <option value="ingreso" {% if request.args.get('tipo') == 'ingreso' %}selected{% endif %}>Ingreso</option>
+                        <option value="egreso" {% if request.args.get('tipo') == 'egreso' %}selected{% endif %}>Egreso</option>
+                    </select>
+                </div>
+                <div class="col-lg-2 col-md-4">
+                    <input type="text" name="categoria" class="form-control rounded-pill" placeholder="Categoría" value="{{ request.args.get('categoria', '') }}">
+                </div>
+                <div class="col-lg-2 col-md-4">
+                    <input type="date" name="desde" class="form-control rounded-pill" value="{{ request.args.get('desde', '') }}">
+                </div>
+                <div class="col-lg-2 col-md-4">
+                    <input type="date" name="hasta" class="form-control rounded-pill" value="{{ request.args.get('hasta', '') }}">
+                </div>
+                <div class="col-lg-2 col-md-4">
+                    <input type="text" name="busqueda" class="form-control rounded-pill" placeholder="Buscar descripción..." value="{{ request.args.get('busqueda', '') }}">
+                </div>
+                <div class="col-lg-2 col-md-4 d-grid">
+                    <button type="submit" class="btn btn-primary rounded-pill"><i class="bi bi-funnel"></i> Filtrar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Totales -->
+    <div class="row mb-4">
+        <div class="col-md-4 mb-2">
+            <div class="card card-gradient h-100" style="background: linear-gradient(90deg,#e9f7ef,#d4edda);">
+                <div class="card-body text-center">
+                    <span class="fs-3 text-success"><i class="bi bi-arrow-down-circle"></i></span>
+                    <div class="fw-bold mt-2">Ingresos</div>
+                    <div class="fs-4 text-success">${{ '{:,}'.format(total_ingresos|int) }}</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 mb-2">
+            <div class="card card-gradient h-100" style="background: linear-gradient(90deg,#f8d7da,#fff3cd);">
+                <div class="card-body text-center">
+                    <span class="fs-3 text-danger"><i class="bi bi-arrow-up-circle"></i></span>
+                    <div class="fw-bold mt-2">Egresos</div>
+                    <div class="fs-4 text-danger">${{ '{:,}'.format(total_egresos|int) }}</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 mb-2">
+            <div class="card card-gradient h-100" style="background: linear-gradient(90deg,{% if balance_neto >= 0 %}#d1e7dd,#b6f0c6{% else %}#f8d7da,#f5c6cb{% endif %}); color: #212529;">
+                <div class="card-body text-center">
+                    <span class="fs-3"><i class="bi bi-calculator"></i></span>
+                    <div class="fw-bold mt-2">Balance Neto</div>
+                    <div class="fs-4">{% if balance_neto >= 0 %}<span class="text-success">{% else %}<span class="text-danger">{% endif %}${{ '{:,}'.format(balance_neto|int) }}</span></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="d-flex justify-content-between mb-3">
+        <a href="{{ url_for('contabilidad.dashboard') }}" class="btn btn-outline-secondary rounded-pill">
+            <i class="bi bi-arrow-left"></i> Dashboard
+        </a>
+        <a href="{{ url_for('contabilidad.exportar_excel', **request.args) }}" class="btn btn-outline-success rounded-pill">
+            <i class="bi bi-file-earmark-excel"></i> Exportar a Excel
+        </a>
+    </div>
+
+    <!-- Gráfico de evolución mensual -->
+<div class="card chart-card mb-4 border-0 shadow-sm">
+    <div class="card-body">
+        <h5 class="fw-bold mb-3 text-center text-primary"><i class="bi bi-bar-chart-line"></i> Evolución mensual</h5>
+        <div class="bg-white rounded-4 p-3">
+            <canvas id="graficoEvolucion" height="80"></canvas>
+        </div>
+    </div>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+const ctx = document.getElementById('graficoEvolucion').getContext('2d');
+const graficoEvolucion = new Chart(ctx, {
+    type: 'bar',
+    data: {
+        labels: {{ labels_meses|tojson }},
+        datasets: [
+            {
+                label: 'Ingresos',
+                data: {{ datos_ingresos|tojson }},
+                backgroundColor: 'rgba(25, 135, 84, 0.8)',
+                borderRadius: 12
+            },
+            {
+                label: 'Egresos',
+                data: {{ datos_egresos|tojson }},
+                backgroundColor: 'rgba(220, 53, 69, 0.8)',
+                borderRadius: 12
+            }
+        ]
+    },
+    options: {
+        plugins: {
+            legend: { position: 'top' }
+        },
+        scales: {
+            y: { beginAtZero: true }
+        }
+    }
+});
+</script>
+
+<!-- Tabla de transacciones -->
+<div class="card border-0 rounded-4 shadow-sm mb-4">
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+    <thead style="background: linear-gradient(90deg,#e9ecef,#f8f9fa);">
+    <tr>
+        <th class="text-center">Fecha</th>
+        <th class="text-center">Tipo</th>
+        <th class="text-center">Monto</th>
+        <th class="text-center">Categoría</th>
+        <th class="text-center">Descripción</th>
+        <th class="text-center">Usuario</th>
+        <th class="text-center">Rol</th>
+        <th class="text-center">Acciones</th>
+    </tr>
+</thead>
+<tbody>
+    {% for t in transacciones %}
+    <tr class="{% if loop.index0 % 2 == 0 %}table-light{% endif %}" style="transition: background 0.2s;">
+        <td class="text-center">{{ t.fecha.strftime('%Y-%m-%d') }}</td>
+        <td class="text-center">
+            <span class="badge px-3 py-2 {% if t.tipo == 'ingreso' %}bg-success{% else %}bg-danger{% endif %} text-white rounded-pill shadow">{{ t.tipo|capitalize }}</span>
+        </td>
+        <td class="text-center fw-bold">${{ '{:,}'.format(t.monto|int) }}</td>
+        <td class="text-center">
+            <span class="badge bg-info text-dark rounded-pill px-3 py-2 shadow">{{ t.categoria }}</span>
+        </td>
+        <td class="text-center">
+            <span title="{{ t.descripcion }}">{{ t.descripcion[:40] }}{% if t.descripcion|length > 40 %}...{% endif %}</span>
+        </td>
+        <td class="text-center">{{ t.usuario.nombre }}</td>
+        <td class="text-center">{{ t.usuario.rol|capitalize }}</td>
+        <td class="text-center">
+            <a href="{{ url_for('contabilidad.editar_transaccion', transaccion_id=t.id) }}" class="btn btn-sm btn-outline-primary rounded-pill me-1" title="Editar">
+                <i class="bi bi-pencil"></i>
+            </a>
+            <form method="POST" action="{{ url_for('contabilidad.eliminar_transaccion', transaccion_id=t.id) }}" style="display:inline;">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button type="submit" class="btn btn-sm btn-outline-danger rounded-pill" title="Eliminar" onclick="return confirm('¿Seguro que deseas eliminar esta transacción?');">
+                    <i class="bi bi-trash"></i>
+                </button>
+            </form>
+        </td>
+    </tr>
+    {% else %}
+    <tr>
+        <td colspan="8" class="text-center text-muted">No hay transacciones registradas.</td>
+    </tr>
+    {% endfor %}
+</tbody>
+</table>
+        </div>
+    </div>
+</div>
+    <nav aria-label="Paginación" class="mt-4">
+        <ul class="pagination justify-content-center">
+            {% if page > 1 %}
+            <li class="page-item">
+                <a class="page-link rounded-pill" href="?page={{ page - 1 }}{{ request.query_string|safe|replace('page=' ~ page, '') }}">Anterior</a>
+            </li>
+            {% endif %}
+            <li class="page-item disabled"><span class="page-link rounded-pill">Página {{ page }}</span></li>
+            {% if has_next %}
+            <li class="page-item">
+                <a class="page-link rounded-pill" href="?page={{ page + 1 }}{{ request.query_string|safe|replace('page=' ~ page, '') }}">Siguiente</a>
+            </li>
+            {% endif %}
+        </ul>
+    </nav>
+</div>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+{% endblock %}

@@ -1,0 +1,140 @@
+{% extends "base.html" %} {% block content %}
+<style>
+    .cotizaciones-container {
+        max-width: 900px;
+        margin: 40px auto;
+        background: #fff;
+        border-radius: 14px;
+        box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
+        padding: 36px 40px 28px 40px;
+    }
+    
+    .cotizaciones-title {
+        font-family: 'Montserrat', Arial, sans-serif;
+        font-weight: 700;
+        font-size: 2.1em;
+        color: #1e2a38;
+        margin-bottom: 18px;
+        letter-spacing: 1px;
+    }
+    
+    .cotizaciones-table th {
+        background: #f0f4f8;
+        color: #222;
+        font-weight: 700;
+        border-bottom: 2px solid #eaeaea;
+    }
+    
+    .cotizaciones-table td,
+    .cotizaciones-table th {
+        vertical-align: middle;
+        padding: 12px 10px;
+    }
+    
+    .cotizaciones-table tr {
+        transition: background 0.2s;
+    }
+    
+    .cotizaciones-table tr:hover {
+        background: #f8fafc;
+    }
+    
+    .badge {
+        font-size: 1em;
+        padding: 6px 18px;
+        border-radius: 16px;
+        font-weight: 600;
+        letter-spacing: 0.5px;
+    }
+    
+    .badge.bg-warning {
+        background: #ffe9a7;
+        color: #b48a00;
+    }
+    
+    .badge.bg-success {
+        background: #d4f8e8;
+        color: #1e7e34;
+    }
+    
+    .badge.bg-danger {
+        background: #ffd6d6;
+        color: #c82333;
+    }
+    
+    .btn-volver {
+        margin-top: 32px;
+        padding: 12px 32px;
+        border-radius: 8px;
+        background: #e0e0e0;
+        color: #222;
+        text-decoration: none;
+        font-weight: 600;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+        transition: background 0.2s;
+        display: inline-block;
+    }
+    
+    .btn-volver:hover {
+        background: #d1e7fd;
+        color: #0d6efd;
+    }
+    
+    .ver-btn {
+        background: #0d6efd;
+        color: #fff;
+        border: none;
+        border-radius: 6px;
+        padding: 7px 18px;
+        font-weight: 600;
+        text-decoration: none;
+        transition: background 0.2s;
+        margin-left: 10px;
+    }
+    
+    .ver-btn:hover {
+        background: #084298;
+        color: #fff;
+    }
+</style>
+<div class="cotizaciones-container">
+    <div class="cotizaciones-title">Mis Cotizaciones</div>
+    {% if cotizaciones %}
+    <table class="table cotizaciones-table">
+        <thead>
+            <tr>
+                <th>Código</th>
+                <th>Estado</th>
+                <th>Total</th>
+                <th>Fecha</th>
+                <th>Acciones</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for c in cotizaciones %}
+            <tr>
+                <td>{{ c.codigo }}</td>
+                <td>
+                    {% if c.estado == 'pendiente' %}
+                    <span class="badge bg-warning text-dark">Pendiente</span> {% elif c.estado == 'aprobada' %}
+                    <span class="badge bg-success">Aprobada</span> {% else %}
+                    <span class="badge bg-danger">Rechazada</span> {% endif %}
+                </td>
+                <td>${{ c.total|miles }}</td>
+                <td>{{ c.fecha_creacion.strftime('%d/%m/%Y') }}</td>
+                <td>
+                    <a href="{{ url_for('cliente.ver_cotizacion', id=c.id) }}" class="ver-btn">Ver detalle</a>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <p class="text-muted" style="font-size:1.1em;">No tienes cotizaciones registradas.</p>
+    {% endif %}
+
+    <div style="text-align:center;">
+        <a href="{{ url_for('cliente.dashboard') }}" class="btn-volver">← Volver al Marketplace</a>
+    </div>
+</div>
+{% endblock %}

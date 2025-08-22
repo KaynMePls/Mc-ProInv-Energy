@@ -1,0 +1,179 @@
+{% extends "base.html" %} {% block content %}
+<style>
+    body {
+        background: linear-gradient(120deg, #23272f 0%, #1a1d23 100%);
+        min-height: 100vh;
+    }
+    
+    .login-wrapper {
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    .login-card {
+        border-radius: 22px;
+        box-shadow: 0 8px 32px rgba(30, 41, 59, 0.25);
+        background: rgba(28, 32, 38, 0.98);
+        padding: 2.5rem 2.5rem 2rem 2.5rem;
+        max-width: 410px;
+        width: 100%;
+        animation: fadeInUp 0.8s;
+        position: relative;
+        color: #e3e6eb;
+    }
+    
+    @keyframes fadeInUp {
+        0% {
+            opacity: 0;
+            transform: translateY(40px);
+        }
+        100% {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    
+    .login-logo {
+        width: 80px;
+        height: 80px;
+        object-fit: contain;
+        margin-bottom: 18px;
+        border-radius: 16px;
+        box-shadow: 0 2px 12px #23272f;
+        background: #181a1f;
+        display: block;
+        margin-left: auto;
+        margin-right: auto;
+        animation: logoPop 1s;
+    }
+    
+    @keyframes logoPop {
+        0% {
+            transform: scale(0.7);
+        }
+        80% {
+            transform: scale(1.1);
+        }
+        100% {
+            transform: scale(1);
+        }
+    }
+    
+    .login-title {
+        font-weight: 900;
+        font-size: 2em;
+        color: #e3e6eb;
+        text-align: center;
+        margin-bottom: 8px;
+        letter-spacing: 1px;
+        text-shadow: 0 2px 8px #181a1f;
+    }
+    
+    .login-subtitle {
+        text-align: center;
+        color: #7bb0ff;
+        font-size: 1.1em;
+        margin-bottom: 18px;
+        font-weight: 600;
+    }
+    
+    .login-about {
+        text-align: center;
+        color: #b0b6be;
+        font-size: 1em;
+        margin-bottom: 22px;
+        font-weight: 400;
+        line-height: 1.5;
+    }
+    
+    .form-label {
+        font-weight: 700;
+        color: #7bb0ff;
+    }
+    
+    .form-control {
+        border-radius: 14px;
+        font-size: 1.1em;
+        padding: 0.75em 1em;
+        background: #23272f;
+        color: #e3e6eb;
+        border: 1px solid #38404a;
+    }
+    
+    .form-control:focus {
+        background: #23272f;
+        color: #fff;
+        border-color: #7bb0ff;
+        box-shadow: 0 0 0 2px #7bb0ff33;
+    }
+    
+    .btn-primary {
+        font-weight: 700;
+        font-size: 1.1em;
+        border-radius: 18px;
+        background: #1976d2;
+        border: none;
+        box-shadow: 0 2px 8px #23272f;
+        transition: background 0.18s, color 0.18s, transform 0.15s;
+    }
+    
+    .btn-primary:hover {
+        background: #1565c0;
+        transform: scale(1.04);
+    }
+    
+    .login-card .alert {
+        font-size: 0.97em;
+        border-radius: 12px;
+        margin-bottom: 1rem;
+    }
+    
+    .login-footer {
+        text-align: center;
+        margin-top: 1.5rem;
+        color: #b0b6be;
+        font-size: 0.97em;
+    }
+    
+    .login-footer a {
+        color: #7bb0ff;
+        font-weight: 700;
+        text-decoration: underline;
+    }
+</style>
+<div class="login-wrapper">
+    <div class="login-card shadow">
+        <img src="{{ url_for('static', filename='Solarium.png') }}" alt="Logo Empresa" class="login-logo">
+        <div class="login-title">MC Proinv</div>
+        <div class="login-subtitle">Acceso seguro a tu cuenta</div>
+        <div class="login-about">
+            MC Proinv es tu aliado en soluciones tecnológicas y gestión de inventario.<br> Ofrecemos innovación, respaldo y eficiencia para potenciar tu empresa.<br> Inicia sesión para administrar tus productos, servicios y compras de manera profesional.
+        </div>
+        <div class="card-body p-0">
+            {% with messages = get_flashed_messages(with_categories=true) %} {% if messages %} {% for category, message in messages %}
+            <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+            {% endfor %} {% endif %} {% endwith %}
+            <form method="POST" action="{{ url_for('auth.login') }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+                <div class="mb-3">
+                    <label for="email" class="form-label">Correo Electrónico</label>
+                    <input type="email" class="form-control" id="email" name="email" required autofocus>
+                </div>
+                <div class="mb-3">
+                    <label for="password" class="form-label">Contraseña</label>
+                    <input type="password" class="form-control" id="password" name="password" required>
+                </div>
+                <button type="submit" class="btn btn-primary w-100 mt-2">Ingresar</button>
+            </form>
+            <div class="login-footer mt-3">
+                ¿Eres nuevo? <a href="{{ url_for('auth.registro') }}">Regístrate aquí</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

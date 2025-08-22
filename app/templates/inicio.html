@@ -1,0 +1,345 @@
+{% extends "base.html" %} {% block content %}
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700;900&display=swap" rel="stylesheet">
+<style>
+    body,
+    .hero-bg,
+    .hero-title,
+    .hero-subtitle,
+    .hero-features,
+    .hero-bottom-text {
+        font-family: 'Montserrat', Arial, sans-serif;
+    }
+    
+    .hero-bg {
+        background: linear-gradient(120deg, #232526 0%, #414345 100%);
+        color: #fff;
+        padding: 80px 0 60px 0;
+        border-radius: 0 0 40px 40px;
+        box-shadow: 0 8px 32px rgba(40, 40, 40, 0.18);
+        position: relative;
+        overflow: hidden;
+        animation: fadeInUp 1s ease;
+    }
+    
+    .hero-bg::before {
+        content: "";
+        position: absolute;
+        top: -80px;
+        left: -120px;
+        width: 400px;
+        height: 400px;
+        background: radial-gradient(circle, #fff2 0%, #232526 80%);
+        opacity: 0.12;
+        z-index: 0;
+    }
+    
+    .hero-bg::after {
+        content: "";
+        position: absolute;
+        bottom: -60px;
+        right: -60px;
+        width: 180px;
+        height: 180px;
+        background: radial-gradient(circle, #b71c1c 0%, #232526 80%);
+        opacity: 0.10;
+        z-index: 0;
+    }
+    
+    @keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(30px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    
+    .hero-logo {
+        font-size: 5rem;
+        margin-bottom: 24px;
+        animation: pulse 2s infinite;
+        z-index: 1;
+        position: relative;
+        text-shadow: 0 8px 32px #b71c1c55;
+        animation: fadeInUp 1.2s;
+    }
+    
+    @keyframes pulse {
+        0% {
+            transform: scale(1);
+        }
+        50% {
+            transform: scale(1.08);
+        }
+        100% {
+            transform: scale(1);
+        }
+    }
+    
+    .hero-title {
+        font-size: 3.2rem;
+        font-weight: 900;
+        letter-spacing: 2px;
+        text-shadow: 0 6px 32px #b71c1c33;
+        margin-bottom: 12px;
+        z-index: 1;
+        position: relative;
+        color: #b71c1c;
+        animation: fadeInUp 1.3s;
+    }
+    
+    .hero-separator {
+        height: 2px;
+        width: 80px;
+        background: #b71c1c;
+        margin: 24px auto 18px auto;
+        border-radius: 2px;
+    }
+    
+    .hero-subtitle {
+        font-size: 1.25rem;
+        font-weight: 500;
+        margin-bottom: 38px;
+        text-shadow: 0 2px 12px #fff2;
+        z-index: 1;
+        position: relative;
+        color: #fff;
+        animation: fadeInUp 1.4s;
+    }
+    
+    .hero-btns .btn {
+        font-size: 1.1rem;
+        padding: 14px 38px;
+        margin: 0 10px;
+        border-radius: 30px;
+        box-shadow: 0 2px 12px #b71c1c22;
+        transition: transform 0.2s, box-shadow 0.2s;
+        font-weight: 700;
+    }
+    
+    .hero-btns .btn-light {
+        background: #fff;
+        color: #232526;
+        border: none;
+    }
+    
+    .hero-btns .btn-danger {
+        background: linear-gradient(90deg, #b71c1c 0%, #232526 100%);
+        color: #fff;
+        border: none;
+    }
+    
+    .hero-btns .btn:hover {
+        transform: scale(1.07);
+        box-shadow: 0 4px 24px #b71c1c33;
+    }
+    
+    .hero-features {
+        margin-top: 48px;
+        z-index: 1;
+        position: relative;
+        display: flex;
+        justify-content: center;
+        gap: 32px;
+        flex-wrap: wrap;
+        animation: fadeInUp 1.5s;
+    }
+    
+    .hero-features .feature {
+        background: rgba(255, 255, 255, 0.04);
+        border-radius: 14px;
+        padding: 22px 18px 14px 18px;
+        min-width: 200px;
+        max-width: 240px;
+        box-shadow: 0 2px 12px #b71c1c33;
+        display: inline-block;
+        margin: 0 8px;
+        text-align: center;
+        transition: transform 0.2s, box-shadow 0.2s;
+    }
+    
+    .hero-features .feature:hover {
+        transform: translateY(-6px) scale(1.03);
+        box-shadow: 0 8px 32px #b71c1c55;
+    }
+    
+    .hero-features .feature-icon {
+        font-size: 2.2rem;
+        margin-bottom: 8px;
+        color: #b71c1c;
+        text-shadow: 0 2px 8px #232526;
+    }
+    
+    .hero-features .feature-title {
+        font-size: 1.08rem;
+        font-weight: 700;
+        color: #fff;
+    }
+    
+    .hero-features .feature-desc {
+        font-size: 0.98rem;
+        color: #e0e0e0;
+        opacity: 0.85;
+    }
+    
+    .hero-quote {
+        margin-top: 38px;
+        font-size: 1.15rem;
+        font-style: italic;
+        color: #fff;
+        opacity: 0.85;
+        text-shadow: 0 2px 8px #b71c1c22;
+        z-index: 1;
+        position: relative;
+        animation: fadeInUp 1.6s;
+    }
+    
+    .hero-logo-img {
+        margin-top: 50px;
+        margin-bottom: 24px;
+        width: 160px;
+        height: auto;
+        filter: drop-shadow(0 4px 24px #b71c1c55);
+        transition: transform 0.3s;
+    }
+    
+    .hero-logo-img:hover {
+        transform: scale(1.06) rotate(-2deg);
+    }
+    
+    .hero-bottom {
+        background: #f5f5f5;
+        border-radius: 0 0 40px 40px;
+        margin-top: 48px;
+        padding: 32px 0 22px 0;
+        box-shadow: 0 -4px 24px #b71c1c11;
+        overflow: hidden;
+        animation: fadeInUp 1.7s;
+    }
+    
+    .hero-bottom-text {
+        font-size: 1.08rem;
+        color: #b71c1c;
+        font-weight: 600;
+        margin-bottom: 12px;
+        letter-spacing: 1px;
+    }
+    
+    .hero-contact {
+        margin-top: 14px;
+        font-size: 1.02rem;
+        color: #232526;
+        font-weight: 500;
+        letter-spacing: 1px;
+        opacity: 0.95;
+    }
+    
+    .hero-contact a {
+        color: #b71c1c;
+        text-decoration: underline;
+        font-weight: 600;
+        margin-left: 6px;
+    }
+    
+    .hero-contact .icon {
+        font-size: 1.1em;
+        vertical-align: middle;
+        margin-right: 4px;
+    }
+    
+    .hero-footer {
+        background: #232526;
+        color: #fff;
+        padding: 16px 0;
+        text-align: center;
+        font-size: 0.95rem;
+        letter-spacing: 1px;
+        border-top: 2px solid #b71c1c;
+    }
+    
+    .hero-footer a {
+        color: #b71c1c;
+        margin: 0 8px;
+        text-decoration: none;
+        font-weight: 600;
+        transition: color 0.2s;
+    }
+    
+    .hero-footer a:hover {
+        color: #fff;
+    }
+    
+    @media (max-width: 768px) {
+        .hero-title {
+            font-size: 2rem;
+        }
+        .hero-subtitle {
+            font-size: 1rem;
+        }
+        .hero-logo {
+            font-size: 2.5rem;
+        }
+        .hero-features {
+            flex-direction: column;
+            gap: 14px;
+        }
+        .hero-bottom {
+            padding: 22px 0 12px 0;
+        }
+        .hero-logo-img {
+            width: 110px;
+        }
+    }
+</style>
+<div class="hero-bg text-center">
+    <div class="hero-logo">⚡</div>
+    <div class="hero-title">MC Proinv Energy</div>
+    <div class="hero-separator"></div>
+    <div class="hero-subtitle">Soluciones inteligentes para la gestión y guia de tu empresa</div>
+    <div class="hero-btns mb-4">
+        <a href="{{ url_for('auth.login') }}" class="btn btn-light btn-lg fw-bold shadow">Iniciar sesión</a>
+        <a href="{{ url_for('auth.registro') }}" class="btn btn-danger btn-lg fw-bold shadow">Registrarse</a>
+    </div>
+    <div class="hero-features">
+        <div class="feature">
+            <div class="feature-icon">💼</div>
+            <div class="feature-title">Gestión Empresarial</div>
+            <div class="feature-desc">Procesos eficientes y control total de tu operación.</div>
+        </div>
+        <div class="feature">
+            <div class="feature-icon">🔒</div>
+            <div class="feature-title">Seguridad y Privacidad</div>
+            <div class="feature-desc">Tus datos protegidos con tecnología de punta.</div>
+        </div>
+        <div class="feature">
+            <div class="feature-icon">📈</div>
+            <div class="feature-title">Reportes Avanzados</div>
+            <div class="feature-desc">Información clara para decisiones inteligentes.</div>
+        </div>
+    </div>
+    <div class="hero-quote">
+        “Excelencia, innovación y confianza para tu empresa.<br>
+        <b>¡MC Proinv Energy, tu aliado estratégico!</b>”
+    </div>
+    <!-- Logo de la empresa en la zona blanca inferior -->
+    <div class="hero-bottom">
+        <div class="hero-bottom-text">Con el respaldo de:</div>
+        <img src="{{ url_for('static', filename='Solarium.png') }}" alt="Logo MC Proinv Energy" class="hero-logo-img">
+        <div class="hero-contact mt-3">
+            <span class="icon">📞</span> WhatsApp soporte: <a href="https://wa.me/573232378585" target="_blank">+57 323 237 8585</a><br>
+            <span class="icon">✉️</span> Correo soporte: <a href="mailto:soporte@mcproinv.com">soporte@mcproinv.com</a>
+        </div>
+    </div>
+</div>
+<!-- Footer elegante y serio -->
+<footer class="hero-footer">
+    &copy; {{ year if year else '2025' }} MC Proinv Energy. Todos los derechos reservados.
+    <span>
+        <a href="https://instagram.com/" target="_blank">Instagram</a>
+        <a href="https://facebook.com/" target="_blank">Facebook</a>
+        <a href="https://linkedin.com/" target="_blank">LinkedIn</a>
+    </span>
+</footer>
+{% endblock %}

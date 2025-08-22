@@ -1,0 +1,163 @@
+{% extends "base.html" %} {% block content %}
+<style>
+    body {
+        background: linear-gradient(120deg, #23272f 0%, #1a1d23 100%);
+        min-height: 100vh;
+    }
+    
+    .editar-card {
+        border-radius: 22px;
+        box-shadow: 0 8px 32px rgba(30, 41, 59, 0.18);
+        background: rgba(28, 32, 38, 0.98);
+        padding: 2.5rem 2.5rem 2rem 2.5rem;
+        max-width: 700px;
+        width: 100%;
+        color: #e3e6eb;
+        margin: 40px auto;
+    }
+    
+    .editar-title {
+        font-weight: 900;
+        font-size: 2em;
+        color: #7bb0ff;
+        text-align: center;
+        margin-bottom: 8px;
+        letter-spacing: 1px;
+        text-shadow: 0 2px 8px #181a1f;
+    }
+    
+    .form-label {
+        font-weight: 700;
+        color: #7bb0ff;
+    }
+    
+    .form-control,
+    .form-select {
+        border-radius: 14px;
+        font-size: 1.1em;
+        padding: 0.75em 1em;
+        background: #23272f;
+        color: #fff;
+        border: 1px solid #38404a;
+    }
+    
+    .form-control:focus,
+    .form-select:focus {
+        background: #23272f;
+        color: #fff;
+        border-color: #7bb0ff;
+        box-shadow: 0 0 0 2px #7bb0ff33;
+    }
+    
+    .form-control::placeholder {
+        color: #b0b6be;
+        opacity: 1;
+    }
+    
+    .btn-primary {
+        font-weight: 700;
+        font-size: 1.1em;
+        border-radius: 18px;
+        background: #1976d2;
+        border: none;
+        box-shadow: 0 2px 8px #23272f;
+        transition: background 0.18s, color 0.18s, transform 0.15s;
+    }
+    
+    .btn-primary:hover {
+        background: #1565c0;
+        transform: scale(1.04);
+    }
+    
+    .btn-secondary {
+        border-radius: 18px;
+        font-weight: 700;
+        background: #23272f;
+        color: #7bb0ff;
+        border: 1px solid #7bb0ff;
+    }
+    
+    .btn-secondary:hover {
+        background: #7bb0ff;
+        color: #23272f;
+    }
+</style>
+<div class="editar-card shadow">
+    <div class="editar-title">Editar Producto</div>
+    <form method="post" enctype="multipart/form-data">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <div class="mb-3">
+            <label for="nombre" class="form-label">Nombre</label>
+            <input type="text" class="form-control" id="nombre" name="nombre" value="{{ producto.nombre }}" required>
+        </div>
+        <div class="mb-3">
+            <label for="categoria" class="form-label">Categoría</label>
+            <select class="form-select" id="categoria" name="categoria" required>
+                {% for categoria in categorias %}
+                    <option value="{{ categoria.id }}" {% if producto.categoria_id == categoria.id %}selected{% endif %}>
+                        {{ categoria.nombre }}
+                    </option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="mb-3">
+            <label for="stock" class="form-label">Stock</label>
+            <input type="number" class="form-control" id="stock" name="stock" value="{{ producto.stock }}" min="0" required>
+        </div>
+        <div class="mb-3">
+            <label for="precio" class="form-label">Precio</label>
+            <input type="text" class="form-control" id="precio" name="precio" value="{{ '{:,.0f}'.format(producto.precio).replace(',', '.') }}" min="0" required>
+        </div>
+        <div class="mb-3">
+            <label for="proveedor" class="form-label">Proveedor</label>
+            <select class="form-select" id="proveedor" name="proveedor" required>
+                <option value="">Seleccione un proveedor</option>
+                {% for proveedor in proveedores %}
+                    <option value="{{ proveedor.id }}" {% if producto.proveedor_id == proveedor.id %}selected{% endif %}>
+                        {{ proveedor.nombre }}
+                    </option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="mb-3">
+            <label for="fecha_ingreso" class="form-label">Fecha de ingreso</label>
+            <input type="date" class="form-control" id="fecha_ingreso" name="fecha_ingreso" value="{{ producto.fecha_ingreso }}">
+        </div>
+        <div class="mb-3">
+            <label for="codigo" class="form-label">Código/SKU</label>
+            <input type="text" class="form-control" id="sku" name="sku" value="{{ producto.sku }}" readonly>
+        </div>
+        <div class="mb-3">
+            <label for="descripcion" class="form-label">Descripción</label>
+            <textarea class="form-control" id="descripcion" name="descripcion">{{ producto.descripcion }}</textarea>
+        </div>
+        <div class="mb-3">
+            <label for="ubicacion" class="form-label">Ubicación física</label>
+            <input type="text" class="form-control" id="ubicacion" name="ubicacion" value="{{ producto.ubicacion }}">
+        </div>
+        <div class="mb-3">
+            <label for="estado" class="form-label">Estado</label>
+            <select class="form-select" id="estado" name="estado">
+                <option value="activo" {% if producto.estado == 'activo' %}selected{% endif %}>Activo</option>
+                <option value="inactivo" {% if producto.estado == 'inactivo' %}selected{% endif %}>Inactivo</option>
+                <option value="nuevo" {% if producto.estado == 'nuevo' %}selected{% endif %}>Nuevo</option>
+                <option value="usado" {% if producto.estado == 'usado' %}selected{% endif %}>Usado</option>
+            </select>
+        </div>
+        <div class="mb-3">
+            <label for="imagen" class="form-label">Imagen del producto</label>
+            <input type="file" class="form-control" id="imagen" name="imagen" accept="image/*"> {% if producto.imagen_url %}
+            <div class="mt-2">
+                {% if producto.imagen_url.startswith('http') %}
+                <img src="{{ producto.imagen_url }}" alt="Imagen actual" style="max-width:150px;"> {% else %}
+                <img src="{{ url_for('static', filename='img_productos/' ~ producto.imagen_url) }}" alt="Imagen actual" style="max-width:150px;"> {% endif %}
+            </div>
+            {% endif %}
+        </div>
+        <div class="text-center mt-4">
+            <button type="submit" class="btn btn-primary px-4">Guardar cambios</button>
+            <a href="{{ url_for('inventarios.productos') }}" class="btn btn-secondary ms-2 px-4">Cancelar</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

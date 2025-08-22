@@ -1,0 +1,214 @@
+<style>
+    .word-style {
+        background: #fff;
+        max-width: 900px;
+        margin: 40px auto;
+        padding: 40px 60px;
+        box-shadow: 0 0 24px rgba(25, 118, 210, 0.10);
+        font-family: 'Segoe UI', Arial, sans-serif;
+        font-size: 1.13rem;
+        border-radius: 18px;
+        border: 1.5px solid #e3f2fd;
+    }
+    
+    .word-style h1,
+    .word-style h2,
+    .word-style h3,
+    .word-style h4 {
+        font-family: 'Montserrat', Arial, sans-serif;
+        font-weight: 700;
+        margin-top: 1.5em;
+        color: #1976d2;
+        letter-spacing: 1px;
+    }
+    
+    .word-style h1 {
+        font-size: 2.1em;
+        margin-bottom: 0.5em;
+        text-align: center;
+        text-shadow: 0 2px 8px #e3f2fd;
+    }
+    
+    .word-style label {
+        font-weight: 600;
+        color: #1976d2;
+    }
+    
+    .word-style ul,
+    .word-style table {
+        margin-bottom: 1.5em;
+    }
+    
+    .word-style textarea {
+        font-size: 1.13rem;
+        padding: 1em;
+        border-radius: 8px;
+        border: 1.5px solid #b0bec5;
+        margin-bottom: 2em;
+        width: 100%;
+        min-height: 300px;
+        resize: vertical;
+        box-sizing: border-box;
+        display: block;
+        background: #f8fafc;
+    }
+    
+    .word-style .input-group {
+        display: flex;
+        gap: 1.5em;
+        margin-bottom: 2em;
+        align-items: center;
+        flex-wrap: wrap;
+    }
+    
+    .word-style input[type="text"],
+    .word-style input[type="date"] {
+        font-size: 1.13rem;
+        padding: 0.5em 1em;
+        border-radius: 8px;
+        border: 1.5px solid #b0bec5;
+        width: 250px;
+        box-sizing: border-box;
+        background: #f8fafc;
+    }
+    
+    .word-style .btn {
+        font-size: 1.08rem;
+        padding: 0.6em 2.2em;
+        border-radius: 8px;
+        font-weight: 700;
+        margin-left: 0.5em;
+    }
+    
+    .word-style .btn-danger {
+        background: linear-gradient(90deg, #d32f2f 70%, #ff5252 100%);
+        border: none;
+        color: #fff;
+    }
+    
+    .word-style .btn-secondary {
+        background: #e3f2fd;
+        color: #1976d2;
+        border: none;
+    }
+    
+    .word-style .table {
+        background: #f8fafc;
+        border-radius: 8px;
+        overflow: hidden;
+        margin-bottom: 1.5em;
+    }
+    
+    .word-style .table th {
+        background: #1976d2;
+        color: #fff;
+        font-weight: 700;
+        border: none;
+        text-align: center;
+    }
+    
+    .word-style .table td {
+        border: none;
+        text-align: center;
+        vertical-align: middle;
+    }
+    
+    .word-style .table tr:nth-child(even) {
+        background: #e3f2fd;
+    }
+    
+    .word-style .table tr:nth-child(odd) {
+        background: #fff;
+    }
+    
+    .word-style .section-divider {
+        border: none;
+        border-top: 2px solid #e3f2fd;
+        margin: 2.5em 0 2em 0;
+    }
+    
+    .word-style .auto-summary {
+        background: #e3f2fd;
+        border-radius: 8px;
+        padding: 1.2em 1.5em;
+        margin-bottom: 2em;
+        box-shadow: 0 2px 8px rgba(25, 118, 210, 0.07);
+    }
+    
+    .word-style .auto-summary li {
+        margin-bottom: 0.5em;
+    }
+    
+    .word-style .auto-recommend {
+        background: #f8fafc;
+        border-radius: 8px;
+        padding: 1.2em 1.5em;
+        margin-bottom: 2em;
+        box-shadow: 0 2px 8px rgba(25, 118, 210, 0.05);
+    }
+</style>
+<div class="word-style">
+    <h1><i class="bi bi-clipboard2-check"></i> Reporte Manual de Inventario</h1>
+    <form method="POST" action="{{ url_for('inventarios.reporte_manual') }}">
+        <div class="input-group">
+            <label for="responsable"><i class="bi bi-person-circle"></i> Responsable:</label>
+            <input type="text" id="responsable" name="responsable" value="{{ responsable }}" onfocus="if(this.value=='{{ responsable }}'){this.value='';}" autocomplete="off" />
+            <label for="fecha"><i class="bi bi-calendar-date"></i> Fecha:</label>
+            <input type="date" id="fecha" name="fecha" value="{{ fecha_actual }}">
+        </div>
+        <hr class="section-divider">
+        <h2><i class="bi bi-bar-chart"></i> Resumen Automático</h2>
+        <ul class="auto-summary">
+            <li><strong>Total productos:</strong> {{ total_productos }}</li>
+            <li><strong>Valor inventario:</strong> ${{ "{:,.0f}".format(valor_inventario).replace(",", ".") }}</li>
+            <li><strong>Categorías:</strong> {{ total_categorias }}</li>
+            <li><strong>Proveedores:</strong> {{ total_proveedores }}</li>
+            <li><strong>Productos con stock bajo:</strong> {{ productos_stock_bajo }}</li>
+            <li><strong>Productos agotados:</strong> {{ productos_agotados }}</li>
+        </ul>
+        <h3><i class="bi bi-lightbulb"></i> Recomendaciones automáticas</h3>
+        <ul class="auto-recommend">
+            {% for recomendacion in recomendaciones %}
+            <li>{{ recomendacion }}</li>
+            {% endfor %}
+        </ul>
+        <h3><i class="bi bi-exclamation-triangle"></i> Productos críticos</h3>
+        <div class="table-responsive">
+            <table class="table table-bordered table-sm align-middle">
+                <thead>
+                    <tr>
+                        <th>Nombre</th>
+                        <th>Categoría</th>
+                        <th>Proveedor</th>
+                        <th>Stock</th>
+                        <th>Estado</th>
+                        <th>Precio</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for producto in productos_criticos %}
+                    <tr>
+                        <td>{{ producto.nombre }}</td>
+                        <td>{{ producto.categoria.nombre if producto.categoria else 'Sin categoría' }}</td>
+                        <td>{{ producto.proveedor_id }}</td>
+                        <td>{{ producto.stock }}</td>
+                        <td>{{ producto.estado }}</td>
+                        <td>${{ "{:,.0f}".format(producto.precio).replace(",", ".") }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        <hr class="section-divider">
+        <h2><i class="bi bi-pencil-square"></i> Redacción del reporte manual</h2>
+        <p>
+            <em>Escribe aquí tu análisis, observaciones, conclusiones y acciones recomendadas. Este espacio es para tu reporte personalizado:</em>
+        </p>
+        <textarea class="form-control mb-3" rows="12" name="reporte_manual" placeholder="Escribe aquí tu reporte manual..."></textarea>
+        <div class="text-end">
+            <a href="{{ url_for('inventarios.exportar_pdf_reporte_manual') }}">Descargar PDF</a>
+            <a href="{{ url_for('inventarios.reporte') }}" class="btn btn-secondary">Volver al reporte automático</a>
+        </div>
+    </form>
+</div>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">

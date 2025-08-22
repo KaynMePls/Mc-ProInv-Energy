@@ -1,0 +1,209 @@
+{% extends "base.html" %} {% block content %}
+<style>
+    body {
+        background: linear-gradient(120deg, #23272f 0%, #1a1d23 100%);
+        min-height: 100vh;
+    }
+    
+    .registro-wrapper {
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    .registro-card {
+        border-radius: 22px;
+        box-shadow: 0 8px 32px rgba(30, 41, 59, 0.25);
+        background: rgba(28, 32, 38, 0.98);
+        padding: 2.5rem 2.5rem 2rem 2.5rem;
+        max-width: 430px;
+        width: 100%;
+        animation: fadeInUp 0.8s;
+        position: relative;
+        color: #e3e6eb;
+    }
+    
+    @keyframes fadeInUp {
+        0% {
+            opacity: 0;
+            transform: translateY(40px);
+        }
+        100% {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    
+    .registro-logo {
+        width: 90px;
+        height: 90px;
+        object-fit: contain;
+        margin-bottom: 18px;
+        border-radius: 18px;
+        box-shadow: 0 2px 12px #000000;
+        background: #fbfcfd;
+        display: block;
+        margin-left: auto;
+        margin-right: auto;
+        animation: logoPop 1s;
+    }
+    
+    @keyframes logoPop {
+        0% {
+            transform: scale(0.7);
+        }
+        80% {
+            transform: scale(1.1);
+        }
+        100% {
+            transform: scale(1);
+        }
+    }
+    
+    .registro-title {
+        font-weight: 900;
+        font-size: 2em;
+        color: #e3e6eb;
+        text-align: center;
+        margin-bottom: 8px;
+        letter-spacing: 1px;
+        text-shadow: 0 2px 8px #181a1f;
+    }
+    
+    .registro-subtitle {
+        text-align: center;
+        color: #7bb0ff;
+        font-size: 1.1em;
+        margin-bottom: 18px;
+        font-weight: 600;
+    }
+    
+    .registro-about {
+        text-align: center;
+        color: #b0b6be;
+        font-size: 1em;
+        margin-bottom: 22px;
+        font-weight: 400;
+        line-height: 1.5;
+    }
+    
+    .form-label {
+        font-weight: 700;
+        color: #7bb0ff;
+    }
+    
+    .form-control {
+        border-radius: 14px;
+        font-size: 1.1em;
+        padding: 0.75em 1em;
+        background: #bac2d3;
+        color: #fff;
+        border: 1px solid #38404a;
+    }
+    
+    .form-control:focus {
+        background: #23272f;
+        color: #fff;
+        border-color: #7bb0ff;
+        box-shadow: 0 0 0 2px #7bb0ff33;
+    }
+    
+    .input-group-text {
+        background: #23272f;
+        color: #7bb0ff;
+        font-weight: 700;
+        border-radius: 12px 0 0 12px;
+        border: 1px solid #38404a;
+    }
+    
+    .btn-success {
+        font-weight: 700;
+        font-size: 1.1em;
+        border-radius: 18px;
+        background: #43cea2;
+        border: none;
+        box-shadow: 0 2px 8px #23272f;
+        transition: background 0.18s, color 0.18s, transform 0.15s;
+        color: #181a1f;
+    }
+    
+    .btn-success:hover {
+        background: #388e3c;
+        color: #fff;
+        transform: scale(1.04);
+    }
+    
+    .alert {
+        border-radius: 14px;
+        font-size: 1.1em;
+    }
+    
+    .registro-footer {
+        text-align: center;
+        margin-top: 1.5rem;
+        color: #b0b6be;
+        font-size: 0.97em;
+    }
+    
+    .registro-footer a {
+        color: #7bb0ff;
+        font-weight: 700;
+        text-decoration: underline;
+    }
+</style>
+<div class="registro-wrapper">
+    <div class="registro-card shadow">
+        <img src="{{ url_for('static', filename='Solarium.png') }}" alt="Logo Empresa" class="registro-logo">
+        <div class="registro-title">Registro de Usuario</div>
+        <div class="registro-subtitle">Crea tu cuenta y empieza a disfrutar nuestros servicios</div>
+        <div class="registro-about">
+            Únete a MC Proinv y accede a soluciones tecnológicas y gestión de inventario de primer nivel.<br> Regístrate para administrar tus productos, servicios y compras de manera profesional y segura.
+        </div>
+        <div class="card-body">
+            {% with messages = get_flashed_messages(with_categories=true) %} {% if messages %} {% for category, message in messages %}
+            <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+            {% endfor %} {% endif %} {% endwith %}
+            <form method="POST" action="{{ url_for('auth.registro') }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <div class="mb-3 input-group">
+                    <span class="input-group-text"><i class="bi bi-person-badge"></i></span>
+                    <input type="text" class="form-control" id="documento" name="documento" placeholder="Documento" required>
+                </div>
+                <div class="mb-3 input-group">
+                    <span class="input-group-text"><i class="bi bi-person"></i></span>
+                    <input type="text" class="form-control" id="nombre" name="nombre" placeholder="Nombre Completo" required>
+                </div>
+                <div class="mb-3 input-group">
+                    <span class="input-group-text"><i class="bi bi-envelope"></i></span>
+                    <input type="email" class="form-control" id="email" name="email" placeholder="Correo Electrónico" required>
+                </div>
+                <div class="mb-3 input-group">
+                    <span class="input-group-text"><i class="bi bi-telephone"></i></span>
+                    <input type="tel" class="form-control" id="telefono" name="telefono" placeholder="Teléfono" required>
+                </div>
+                <div class="mb-3 input-group">
+                    <span class="input-group-text"><i class="bi bi-geo-alt"></i></span>
+                    <input type="text" class="form-control" id="direccion" name="direccion" placeholder="Dirección" required>
+                </div>
+                <div class="mb-3 input-group">
+                    <span class="input-group-text"><i class="bi bi-lock"></i></span>
+                    <input type="password" class="form-control" id="password" name="password" minlength="8" placeholder="Contraseña" required>
+                </div>
+                <div class="mb-3 input-group">
+                    <span class="input-group-text"><i class="bi bi-lock-fill"></i></span>
+                    <input type="password" class="form-control" id="confirm_password" name="confirm_password" placeholder="Confirmar Contraseña" required>
+                </div>
+                <button type="submit" class="btn btn-success w-100">Registrarse</button>
+            </form>
+            <div class="registro-footer mt-3">
+                ¿Ya tienes cuenta? <a href="{{ url_for('auth.login') }}">Inicia sesión aquí</a>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- Bootstrap Icons CDN -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css"> {% endblock %}

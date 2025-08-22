@@ -1,0 +1,193 @@
+{% extends "base.html" %} {% block content %}
+<style>
+    body {
+        background: linear-gradient(120deg, #23272f 0%, #1a1d23 100%);
+        min-height: 100vh;
+    }
+    
+    .detalle-card {
+        border-radius: 1.5rem;
+        box-shadow: 0 8px 32px rgba(30, 41, 59, 0.18);
+        background: rgba(28, 32, 38, 0.98);
+        padding: 2.5rem 2.5rem 2rem 2.5rem;
+        margin-top: 2.5rem;
+        max-width: 700px;
+        margin-left: auto;
+        margin-right: auto;
+        color: #e3e6eb;
+    }
+    
+    .detalle-img {
+        max-width: 180px;
+        border-radius: 1rem;
+        border: 1px solid #38404a;
+        background: #23272f;
+        padding: 4px;
+        margin-bottom: 1rem;
+        box-shadow: 0 2px 8px 0 rgba(25, 118, 210, .08);
+    }
+    
+    .badge-estado {
+        font-size: 1em;
+        padding: 0.5em 1.2em;
+        border-radius: 1em;
+        margin-bottom: 0.5em;
+        letter-spacing: 1px;
+    }
+    
+    .detalle-label {
+        font-weight: 700;
+        color: #7bb0ff;
+        min-width: 140px;
+        display: inline-block;
+        font-size: 1.08em;
+    }
+    
+    .detalle-row {
+        margin-bottom: 1.1rem;
+        font-size: 1.08em;
+    }
+    
+    .detalle-value {
+        color: #ffffff;
+        font-weight: 500;
+    }
+    
+    .detalle-actions .btn {
+        border-radius: 14px;
+        font-weight: 700;
+        margin-right: 0.5em;
+        margin-bottom: 0.5em;
+    }
+    
+    .detalle-actions .btn-primary {
+        background: #1976d2;
+        border: none;
+    }
+    
+    .detalle-actions .btn-warning {
+        background: #ffb300;
+        border: none;
+        color: #23272f;
+    }
+    
+    .detalle-actions .btn-outline-secondary {
+        border-radius: 14px;
+        font-weight: 700;
+        border: 1.5px solid #7bb0ff;
+        color: #7bb0ff;
+        background: transparent;
+    }
+    
+    .detalle-actions .btn-outline-secondary:hover {
+        background: #7bb0ff;
+        color: #23272f;
+    }
+    
+    .detalle-title {
+        font-weight: 900;
+        font-size: 2em;
+        color: #7bb0ff;
+        margin-bottom: 0.2em;
+        letter-spacing: 1px;
+        text-shadow: 0 2px 8px #181a1f;
+    }
+    
+    .detalle-cat {
+        color: #ffffff;
+        font-size: 1.1em;
+        margin-bottom: 0.5em;
+    }
+</style>
+<div class="container">
+    <div class="detalle-card">
+        <div class="d-flex align-items-center mb-4">
+            {% if producto.imagen_url %} {% if producto.imagen_url.startswith('http') %}
+            <img src="{{ producto.imagen_url }}" alt="Imagen" class="detalle-img me-4"> {% else %}
+            <img src="{{ url_for('static', filename='img_productos/' ~ producto.imagen_url) }}" alt="Imagen" class="detalle-img me-4"> {% endif %} {% else %}
+            <div class="detalle-img me-4 d-flex align-items-center justify-content-center" style="height:140px;width:140px;background:#23272f;">
+                <i class="bi bi-image text-muted" style="font-size:3em;"></i>
+            </div>
+            {% endif %}
+            <div>
+                <div class="detalle-title">{{ producto.nombre }}</div>
+                <span class="badge badge-estado {% if producto.estado == 'activo' %}bg-success{% elif producto.estado == 'inactivo' %}bg-secondary{% elif producto.estado == 'nuevo' %}bg-primary{% else %}bg-warning text-dark{% endif %}">
+                    {{ producto.estado|capitalize }}
+                </span>
+                <div class="detalle-cat">{{ producto.categoria.nombre if producto.categoria else 'Sin categoría' }}</div>
+            </div>
+        </div>
+        <div class="detalle-row">
+            <span class="detalle-label"><i class="bi bi-stack"></i> Stock:</span>
+            <span class="detalle-value {% if producto.stock < 5 %}text-danger fw-bold{% endif %}">{{ producto.stock }}</span> {% if producto.stock
+            < 5 %} <span class="badge bg-danger ms-2">Bajo</span>
+                {% endif %}
+        </div>
+        <div class="detalle-row">
+            <span class="detalle-label"><i class="bi bi-currency-dollar"></i> Precio:</span>
+            <span class="detalle-value">${{ "{:,.0f}".format(producto.precio).replace(",", ".") if producto.precio is not none else 'N/A' }}</span>
+        </div>
+        <div class="detalle-row">
+            <span class="detalle-label"><i class="bi bi-truck"></i> Proveedor:</span>
+            <span class="detalle-value">{{ producto.proveedor.nombre if producto.proveedor else 'N/A' }}</span>
+        </div>
+        <div class="detalle-row">
+            <span class="detalle-label"><i class="bi bi-calendar2-week"></i> Actualización:</span>
+            <span class="detalle-value">{{ producto.fecha_actualizacion.strftime('%Y-%m-%d %H:%M') if producto.fecha_actualizacion else 'N/A' }}</span>
+        </div>
+        <div class="detalle-row">
+            <span class="detalle-label"><i class="bi bi-upc-scan"></i> Código/SKU:</span>
+            <span class="detalle-value">{{ producto.sku or 'N/A' }}</span>
+        </div>
+        <div class="detalle-row">
+            <span class="detalle-label"><i class="bi bi-geo-alt"></i> Ubicación:</span>
+            <span class="detalle-value">{{ producto.ubicacion or 'N/A' }}</span>
+        </div>
+        <div class="detalle-row">
+            <span class="detalle-label"><i class="bi bi-card-text"></i> Descripción:</span>
+            <span class="detalle-value" style="color:#fff;">{{ producto.descripcion or 'Sin descripción' }}</span>
+        </div>
+        <div class="detalle-actions mt-4">
+            <a href="{{ url_for('inventarios.productos') }}" class="btn btn-outline-secondary me-2">
+                <i class="bi bi-arrow-left"></i> Volver al listado
+            </a>
+            <a href="{{ url_for('inventarios.editar_producto', id=producto.id) }}" class="btn btn-primary me-2">
+                <i class="bi bi-pencil"></i> Editar
+            </a>
+            <a href="{{ url_for('inventarios.editar_stock', id=producto.id) }}" class="btn btn-warning me-2">
+                <i class="bi bi-arrow-up-square"></i> Editar Stock
+            </a>
+        </div>
+        <!-- Historial de movimientos -->
+        <h5 class="mt-5 mb-3" style="color:#7bb0ff;"><i class="bi bi-clock-history"></i> Historial de movimientos</h5>
+        <div class="table-responsive">
+            <table class="table table-sm table-bordered align-middle text-center">
+                <thead class="table-light">
+                    <tr>
+                        <th>Fecha</th>
+                        <th>Tipo</th>
+                        <th>Cantidad</th>
+                        <th>Responsable</th>
+                        <th>Motivo</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for mov in producto.movimientos %}
+                    <tr>
+                        <td>{{ mov.fecha.strftime('%Y-%m-%d %H:%M') }}</td>
+                        <td>{{ mov.tipo|capitalize }}</td>
+                        <td>{{ mov.cantidad }}</td>
+                        <td>{{ mov.responsable.nombre }}</td>
+                        <td>{{ mov.motivo }}</td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="5" class="text-center text-muted">Sin movimientos registrados</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css"> {% endblock %}

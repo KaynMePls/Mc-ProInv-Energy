@@ -1,0 +1,324 @@
+{% extends "base.html" %} 
+{% block content %}
+<style>
+    body {
+        background: linear-gradient(120deg, #23272f 0%, #1a1d23 100%);
+        min-height: 100vh;
+    }
+    .dashboard-card {
+        transition: transform 0.15s, box-shadow 0.15s;
+        border: none;
+        border-radius: 1.2rem;
+        box-shadow: 0 2px 16px 0 rgba(60, 72, 88, .08);
+        position: relative;
+        background: #23272f;
+        color: #e3e6eb;
+    }
+    .dashboard-card:hover {
+        transform: translateY(-6px) scale(1.03);
+        box-shadow: 0 6px 32px 0 rgba(60, 72, 88, .16);
+    }
+    .dashboard-icon {
+        font-size: 2.8em;
+        margin-bottom: 0.5em;
+        display: inline-block;
+        border-radius: 50%;
+        padding: 0.4em;
+        background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+        color: #1976d2;
+        box-shadow: 0 2px 8px 0 rgba(25, 118, 210, .08);
+    }
+    .dashboard-icon-warning {
+        background: linear-gradient(135deg, #fff8e1 0%, #ffe082 100%);
+        color: #ff9800;
+    }
+    .dashboard-icon-success {
+        background: linear-gradient(135deg, #e8f5e9 0%, #a5d6a7 100%);
+        color: #43a047;
+    }
+    .dashboard-icon-cash {
+        background: linear-gradient(135deg, #e1f5fe 0%, #b3e5fc 100%);
+        color: #0288d1;
+    }
+    .dashboard-action-card {
+        border-radius: 1.2rem;
+        border: none;
+        transition: box-shadow 0.15s;
+        background: #23272f;
+        color: #e3e6eb;
+    }
+    .dashboard-action-card:hover {
+        box-shadow: 0 6px 32px 0 rgba(25, 118, 210, .12);
+        background: #1a1d23;
+    }
+    .table-responsive {
+        background: #23272f;
+        border-radius: 1rem;
+    }
+    .table {
+        background: #23272f;
+        color: #e3e6eb;
+    }
+    .table thead {
+        background: #181a1f;
+        color: #7bb0ff;
+    }
+    .table-hover tbody tr:hover {
+        background: #1a1d23;
+    }
+    .table-light th {
+        background: #181a1f !important;
+        color: #7bb0ff !important;
+    }
+    .badge-alert {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        font-size: 1em;
+        z-index: 2;
+    }
+    .alert-warning {
+        background: #fff8e1;
+        color: #ff9800;
+        border: none;
+    }
+</style>
+<div class="container mt-5">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="fw-bold" style="color:#1976d2; letter-spacing:1px;">
+            <i class="bi bi-clipboard-data"></i> Panel de Inventarios
+        </h2>
+        <a href="{{ url_for('auth.logout') }}" class="btn btn-outline-danger">
+            <i class="bi bi-box-arrow-right"></i> Cerrar sesión
+        </a>
+    </div>
+    <!-- Indicadores rápidos -->
+    <div class="row mb-4 g-4">
+        <div class="col-md-3">
+            <div class="card dashboard-card text-center h-100">
+                {% if productos_stock_bajo > 0 %}
+                <span class="badge bg-danger badge-alert" data-bs-toggle="tooltip" title="¡Hay productos con stock bajo!">¡!</span> {% endif %}
+                <div class="card-body">
+                    <span class="dashboard-icon" data-bs-toggle="tooltip" title="Total de productos"><i class="bi bi-box2-heart"></i></span>
+                    <h6 class="card-title text-white mt-2">Total productos</h6>
+                    <h2 class="fw-bold">{{ total_productos }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card dashboard-card text-center h-100">
+                <div class="card-body">
+                    <span class="dashboard-icon dashboard-icon-warning" data-bs-toggle="tooltip" title="Productos con stock bajo"><i class="bi bi-exclamation-octagon"></i></span>
+                    <h6 class="card-title text-white mt-2">Stock bajo</h6>
+                    <h2 class="fw-bold text-warning">{{ productos_stock_bajo }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card dashboard-card text-center h-100">
+                <div class="card-body">
+                    <span class="dashboard-icon dashboard-icon-success" data-bs-toggle="tooltip" title="Nuevos productos"><i class="bi bi-stars"></i></span>
+                    <h6 class="card-title text-white mt-2">Nuevos productos</h6>
+                    <h2 class="fw-bold text-success">{{ productos_nuevos }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card dashboard-card text-center h-100">
+                <div class="card-body">
+                    <span class="dashboard-icon dashboard-icon-cash" data-bs-toggle="tooltip" title="Valor total del inventario"><i class="bi bi-currency-dollar"></i></span>
+                    <h6 class="card-title text-white mt-2">Valor inventario</h6>
+                    <h2 class="fw-bold text-info">
+                        ${{ "{:,.0f}".format(valor_inventario).replace(",", ".") if valor_inventario is not none else '0' }}
+                    </h2>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Acceso rápido y acciones -->
+    <div class="row g-4 mb-4">
+        <div class="col-md-4">
+            <div class="card dashboard-action-card h-100 shadow-sm">
+                <div class="card-body text-center">
+                    <div style="font-size:2.5em; color:#1976d2;">
+                        <i class="bi bi-list-check"></i>
+                    </div>
+                    <h5 class="card-title mt-2 fw-bold">Listado de Productos</h5>
+                    <p class="card-text text-white">Consulta y gestiona todos los productos del inventario.</p>
+                    <a href="{{ url_for('inventarios.productos') }}" class="btn btn-primary w-100">
+                        <i class="bi bi-boxes"></i> Ver productos
+                    </a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card dashboard-action-card h-100 shadow-sm">
+                <div class="card-body text-center">
+                    <div style="font-size:2.5em; color:#43a047;">
+                        <i class="bi bi-plus-circle-dotted"></i>
+                    </div>
+                    <h5 class="card-title mt-2 fw-bold">Agregar Producto</h5>
+                    <p class="card-text text-white">Registra nuevos productos en el inventario.</p>
+                    <a href="{{ url_for('inventarios.nuevo_producto') }}" class="btn btn-success w-100">
+                        <i class="bi bi-plus-lg"></i> Agregar producto
+                    </a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card dashboard-action-card h-100 shadow-sm">
+                <div class="card-body text-center">
+                    <div style="font-size:2.5em; color:#0288d1;">
+                        <i class="bi bi-graph-up-arrow"></i>
+                    </div>
+                    <h5 class="card-title mt-2 fw-bold">Reportes de Inventario</h5>
+                    <p class="card-text text-white">Genera y descarga reportes del inventario.</p>
+                    <a href="{{ url_for('inventarios.reporte') }}" class="btn btn-info w-100 text-white">
+                        <i class="bi bi-file-earmark-bar-graph"></i> Ver reportes
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Gráfica de stock por categoría profesional -->
+    <div class="row mt-5">
+    <div class="col-12">
+        <div class="card shadow-lg mb-4" style="border-radius: 1.5rem; background: #23272f;">
+            <div class="card-header fw-bold d-flex align-items-center" style="color:#1976d2; font-size:1.3em; border-radius: 1.5rem 1.5rem 0 0; background: linear-gradient(90deg,#e3f2fd 0%,#bbdefb 100%);">
+                <i class="bi bi-bar-chart" style="font-size:1.5em; margin-right:10px;"></i>
+                Stock por Categoría
+            </div>
+            <div class="card-body" style="padding:2em;">
+                <canvas id="stockCategoriaChart" style="height:400px;max-height:400px;"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels"></script>
+<script>
+    var categorias = {{ categorias_stock|tojson }};
+    var stockPorCategoria = {{ stock_por_categoria|tojson }};
+    var pastelColors = [
+        '#42a5f5', '#66bb6a', '#ffa726', '#ab47bc', '#ec407a', '#26c6da', '#ff7043', '#8d6e63', '#d4e157', '#789262'
+    ];
+    var ctxStock = document.getElementById('stockCategoriaChart').getContext('2d');
+    var stockCategoriaChart = new Chart(ctxStock, {
+        type: 'bar',
+        data: {
+            labels: categorias,
+            datasets: [{
+                label: 'Stock',
+                data: stockPorCategoria,
+                backgroundColor: pastelColors.slice(0, categorias.length),
+                borderRadius: 14,
+                borderSkipped: false,
+                barPercentage: 0.5,
+                categoryPercentage: 0.7,
+                hoverBackgroundColor: '#1976d2'
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: true,
+                    position: 'top',
+                    labels: {
+                        color: '#1976d2',
+                        font: { size: 18, weight: 'bold' }
+                    }
+                },
+                tooltip: {
+                    enabled: true,
+                    backgroundColor: '#23272f',
+                    titleColor: '#1976d2',
+                    bodyColor: '#e3e6eb',
+                    borderColor: '#1976d2',
+                    borderWidth: 2,
+                    padding: 12,
+                    callbacks: {
+                        label: function(context) {
+                            return 'Stock: ' + context.parsed.y.toLocaleString();
+                        }
+                    }
+                },
+                datalabels: {
+                    anchor: 'end',
+                    align: 'end',
+                    color: '#fff',
+                    font: { weight: 'bold', size: 16 },
+                    formatter: function(value) {
+                        return value;
+                    }
+                }
+            },
+            scales: {
+                x: {
+                    grid: { display: false },
+                    ticks: { color: '#e3e6eb', font: { size: 16 } }
+                },
+                y: {
+                    beginAtZero: true,
+                    grid: { color: '#181a1f' },
+                    ticks: { color: '#e3e6eb', font: { size: 16 } }
+                }
+            },
+            animation: {
+                duration: 1200,
+                easing: 'easeOutBounce'
+            }
+        },
+        plugins: [ChartDataLabels]
+    });
+</script>
+    <!-- Últimos productos agregados -->
+    <div class="row mt-5">
+        <div class="col-12">
+            <h4 class="fw-bold mb-3" style="color:#7bb0ff;"><i class="bi bi-clock-history"></i> Últimos productos agregados</h4>
+            <div class="table-responsive rounded shadow-sm">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th><i class="bi bi-box"></i> Nombre</th>
+                            <th><i class="bi bi-tags"></i> Categoría</th>
+                            <th><i class="bi bi-stack"></i> Stock</th>
+                            <th><i class="bi bi-award"></i> Estado</th>
+                            <th><i class="bi bi-calendar2-week"></i> Fecha de Actualización</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for producto in ultimos_productos %}
+                        <tr>
+                            <td>{{ producto.nombre }}</td>
+                            <td>{{ producto.categoria.nombre if producto.categoria else 'Sin categoría' }}</td>
+                            <td>
+                                <span class="fw-bold {% if producto.stock < 5 %}text-warning{% endif %}">
+                                    {{ "{:,.0f}".format(producto.stock).replace(",", ".") if producto.stock is not none else 'N/A' }}
+                                </span>
+                            </td>
+                            <td>
+                                <span class="badge {% if producto.estado == 'activo' %}bg-success{% elif producto.estado == 'inactivo' %}bg-secondary{% elif producto.estado == 'nuevo' %}bg-primary{% else %}bg-warning text-dark{% endif %}">
+                                    {{ producto.estado|capitalize }}
+                                </span>
+                            </td>
+                            <td>{{ producto.fecha_actualizacion or 'N/A' }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    <!-- Alertas de stock bajo -->
+    {% if productos_stock_bajo > 0 %}
+    <div class="alert alert-warning mt-4 shadow-sm">
+        <i class="bi bi-exclamation-triangle-fill"></i>
+        <strong>¡Atención!</strong> Hay {{ productos_stock_bajo }} productos con stock bajo.
+        <a href="{{ url_for('inventarios.productos', stock='bajo') }}" class="alert-link">Ver productos</a>
+    </div>
+    {% endif %}
+</div>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css"> 
+{% endblock %}

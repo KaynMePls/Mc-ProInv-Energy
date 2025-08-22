@@ -1,0 +1,84 @@
+{% extends "base.html" %} {% block content %}
+<style>
+    body {
+        background: linear-gradient(120deg, #23272f 0%, #1a1d23 100%);
+        min-height: 100vh;
+    }
+    
+    .editar-stock-card {
+        border-radius: 22px;
+        box-shadow: 0 8px 32px rgba(30, 41, 59, 0.18);
+        background: rgba(28, 32, 38, 0.98);
+        padding: 2.5rem 2.5rem 2rem 2.5rem;
+        max-width: 420px;
+        width: 100%;
+        color: #e3e6eb;
+        margin: 60px auto 0 auto;
+    }
+    
+    .editar-stock-title {
+        font-weight: 900;
+        font-size: 1.7em;
+        color: #7bb0ff;
+        text-align: center;
+        margin-bottom: 18px;
+        letter-spacing: 1px;
+        text-shadow: 0 2px 8px #181a1f;
+    }
+    
+    .form-label {
+        font-weight: 700;
+        color: #7bb0ff;
+    }
+    
+    .form-control {
+        border-radius: 14px;
+        font-size: 1.1em;
+        padding: 0.75em 1em;
+        background: #23272f;
+        color: #fff;
+        border: 1px solid #38404a;
+    }
+    
+    .form-control:focus {
+        background: #23272f;
+        color: #fff;
+        border-color: #7bb0ff;
+        box-shadow: 0 0 0 2px #7bb0ff33;
+    }
+    
+    .btn-primary {
+        font-weight: 700;
+        font-size: 1.1em;
+        border-radius: 18px;
+        background: #1976d2;
+        border: none;
+        box-shadow: 0 2px 8px #23272f;
+        transition: background 0.18s, color 0.18s, transform 0.15s;
+    }
+    
+    .btn-primary:hover {
+        background: #1565c0;
+        transform: scale(1.04);
+    }
+    
+    .btn-secondary {
+        border-radius: 18px;
+        font-weight: 700;
+    }
+</style>
+<div class="editar-stock-card shadow">
+    <div class="editar-stock-title">Editar Stock de {{ producto.nombre }}</div>
+    <form method="post">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <div class="mb-3">
+            <label for="stock" class="form-label">Nuevo stock</label>
+            <input type="number" class="form-control" id="stock" name="stock" value="{{ producto.stock }}" min="0" required>
+        </div>
+        <div class="text-center mt-4">
+            <button type="submit" class="btn btn-primary px-4">Actualizar stock</button>
+            <a href="{{ url_for('inventarios.productos') }}" class="btn btn-secondary ms-2 px-4">Cancelar</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

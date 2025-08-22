@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cotización #{{ cotizacion.codigo }}</title>
+    <link href="https://fonts.googleapis.com/css?family=Montserrat:400,700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Montserrat', Arial, sans-serif;
+            background: #f6f8fa;
+            margin: 0;
+            padding: 0;
+        }
+        
+        .cotizacion-box {
+            background: #fff;
+            max-width: 800px;
+            margin: 40px auto;
+            border-radius: 12px;
+            box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
+            padding: 32px 40px;
+        }
+        
+        .logo {
+            width: 180px;
+            margin-bottom: 24px;
+        }
+        
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid #eaeaea;
+            padding-bottom: 16px;
+            margin-bottom: 24px;
+        }
+        
+        .datos-cliente {
+            margin-bottom: 24px;
+        }
+        
+        .datos-cliente h3 {
+            margin: 0 0 8px 0;
+            font-size: 1.1em;
+            color: #333;
+        }
+        
+        .cotizacion-info {
+            color: #666;
+            font-size: 0.98em;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 24px;
+        }
+        
+        th,
+        td {
+            padding: 10px 8px;
+            border-bottom: 1px solid #eaeaea;
+            text-align: left;
+        }
+        
+        th {
+            background: #f0f4f8;
+            color: #222;
+            font-weight: 700;
+        }
+        
+        .resumen {
+            text-align: right;
+            margin-top: 16px;
+        }
+        
+        .resumen p {
+            margin: 2px 0;
+            font-size: 1.1em;
+        }
+        
+        .footer {
+            margin-top: 32px;
+            text-align: center;
+            color: #888;
+            font-size: 0.98em;
+        }
+        
+        .estado {
+            display: inline-block;
+            padding: 4px 14px;
+            border-radius: 16px;
+            font-size: 0.95em;
+            background: #ffe9a7;
+            color: #b48a00;
+            font-weight: 600;
+        }
+        
+        .estado.aprobada {
+            background: #d4f8e8;
+            color: #1e7e34;
+        }
+        
+        .estado.rechazada {
+            background: #ffd6d6;
+            color: #c82333;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="cotizacion-box">
+        <div class="header">
+            <img src="{{ url_for('static', filename='Solarium.png') }}" alt="Logo MC Proinv" class="logo">
+            <div>
+                <div class="cotizacion-info">
+                    <strong>Cotización #{{ cotizacion.codigo }}</strong><br> Fecha: {{ cotizacion.fecha_creacion.strftime('%d/%m/%Y') }}<br> Estado:
+                    <span class="estado {{ cotizacion.estado }}">
+                        {{ cotizacion.estado|capitalize }}
+                    </span>
+                </div>
+            </div>
+        </div>
+        <div class="datos-cliente">
+            <h3>Cliente:</h3>
+            <div>{{ cotizacion.cliente.nombre }}</div>
+        </div>
+        <table>
+            <thead>
+                <tr>
+                    <th>Tipo</th>
+                    <th>Nombre</th>
+                    <th>Descripción</th>
+                    <th>Precio</th>
+                    <th>Cantidad</th>
+                    <th>Subtotal</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in cotizacion.componentes | from_json %}
+                <tr>
+                    <td>{{ item.tipo|capitalize }}</td>
+                    <td>{{ item.nombre }}</td>
+                    <td>{{ item.descripcion if item.tipo == 'servicio' else '-' }}</td>
+                    <td>${{ item.precio|miles}}</td>
+                    <td>{{ item.cantidad }}</td>
+                    <td>${{ item.subtotal|miles }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        <div class="resumen">
+            <p><strong>Total:</strong> ${{ cotizacion.total|miles}}</p>
+            <p>Validez: {{ cotizacion.validez_dias }} días</p>
+        </div>
+        <div class="footer">
+            <p>Gracias por confiar en MC Proinv Energy y Solarium Energy.</p>
+            <p>Para cualquier consulta, contáctanos.</p>
+        </div>
+    </div>
+    </div>
+    <!-- Botón para regresar -->
+    <div style="text-align:center; margin-top: 24px;">
+        <a href="{{ url_for('cliente.cotizaciones') }}" class="btn btn-secondary" style="padding: 10px 28px; border-radius: 6px; background: #e0e0e0; color: #222; text-decoration: none; font-weight: 600; box-shadow: 0 2px 8px rgba(0,0,0,0.06); transition: background 0.2s;">
+            ← Volver a mis cotizaciones
+        </a>
+    </div>
+</body>
+
+</html>

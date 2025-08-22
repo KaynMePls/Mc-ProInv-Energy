@@ -1,0 +1,181 @@
+{% extends "base.html" %} {% block content %}
+<style>
+    body {
+        background: linear-gradient(120deg, #ffffff 0%, #2c2c2c 100%);
+        min-height: 100vh;
+    }
+    
+    .agregar-wrapper {
+        min-height: 100vh;
+        display: flex;
+        align-items: flex-start;
+        justify-content: center;
+        padding-top: 40px;
+    }
+    
+    .agregar-card {
+        border-radius: 22px;
+        box-shadow: 0 8px 32px rgba(30, 41, 59, 0.18);
+        background: rgba(28, 32, 38, 0.98);
+        padding: 2.5rem 2.5rem 2rem 2.5rem;
+        max-width: 900px;
+        width: 100%;
+        color: #e3e6eb;
+        margin-bottom: 40px;
+    }
+    
+    .agregar-title {
+        font-weight: 900;
+        font-size: 2em;
+        color: #7bb0ff;
+        text-align: center;
+        margin-bottom: 8px;
+        letter-spacing: 1px;
+        text-shadow: 0 2px 8px #181a1f;
+    }
+    
+    .agregar-subtitle {
+        text-align: center;
+        color: #b0b6be;
+        font-size: 1.1em;
+        margin-bottom: 22px;
+        font-weight: 400;
+    }
+    
+    .form-label {
+        font-weight: 700;
+        color: #7bb0ff;
+    }
+    
+    .form-control,
+    .form-select {
+        border-radius: 14px;
+        font-size: 1.1em;
+        padding: 0.75em 1em;
+        background: #23272f;
+        color: #fff;
+        border: 1px solid #38404a;
+    }
+    
+    .form-control:focus,
+    .form-select:focus {
+        background: #23272f;
+        color: #fff;
+        border-color: #7bb0ff;
+        box-shadow: 0 0 0 2px #7bb0ff33;
+    }
+    
+    .form-control::placeholder {
+        color: #b0b6be;
+        opacity: 1;
+    }
+    
+    .btn-success {
+        font-weight: 700;
+        font-size: 1.1em;
+        border-radius: 18px;
+        background: #43cea2;
+        border: none;
+        box-shadow: 0 2px 8px #23272f;
+        transition: background 0.18s, color 0.18s, transform 0.15s;
+        color: #181a1f;
+    }
+    
+    .btn-success:hover {
+        background: #388e3c;
+        color: #fff;
+        transform: scale(1.04);
+    }
+    
+    .btn-secondary {
+        border-radius: 18px;
+        font-weight: 700;
+    }
+    
+    .shadow-sm {
+        box-shadow: 0 2px 12px #181a1f22 !important;
+    }
+    
+    .p-3 {
+        background: #23272f !important;
+    }
+</style>
+<div class="agregar-wrapper">
+    <div class="agregar-card shadow">
+        <div class="agregar-title">Agregar Producto</div>
+        <div class="agregar-subtitle">
+            Completa el formulario para registrar un nuevo producto en el inventario.<br> Los campos marcados con <span style="color:#43cea2">*</span> son obligatorios.
+        </div>
+        <form method="post" enctype="multipart/form-data">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <div class="row g-4">
+                <div class="col-md-6">
+                    <div class="p-3 border rounded shadow-sm mb-3">
+                        <label for="nombre" class="form-label">Nombre <span style="color:#43cea2">*</span></label>
+                        <input type="text" class="form-control" id="nombre" name="nombre" required>
+                    </div>
+                    <div class="p-3 border rounded shadow-sm mb-3">
+                        <label for="categoria" class="form-label">Categoría <span style="color:#43cea2">*</span></label>
+                        <select class="form-select" id="categoria" name="categoria" required>
+                            <option value="">Selecciona una categoría</option>
+                            {% for categoria in categorias %}
+                                <option value="{{ categoria.id }}">{{ categoria.nombre }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="p-3 border rounded shadow-sm mb-3">
+                        <label for="stock" class="form-label">Stock inicial <span style="color:#43cea2">*</span></label>
+                        <input type="number" class="form-control" id="stock" name="stock" min="1" required>
+                    </div>
+                    <div class="p-3 border rounded shadow-sm mb-3">
+                        <label for="precio" class="form-label">Precio <span style="color:#43cea2">*</span></label>
+                        <input type="number" class="form-control" id="precio" name="precio" min="1" step="0.01" required>
+                    </div>
+                    <div class="p-3 border rounded shadow-sm mb-3">
+                        <label for="proveedor_id" class="form-label">Proveedor <span style="color:#43cea2">*</span></label>
+                        <select class="form-select" id="proveedor_id" name="proveedor_id" required>
+                            <option value="">Selecciona proveedor</option>
+                            {% for proveedor in proveedores %}
+                                <option value="{{ proveedor.id }}">{{ proveedor.nombre }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="p-3 border rounded shadow-sm mb-3">
+                        <label for="codigo" class="form-label">Código/SKU</label>
+                        <input type="text" class="form-control" id="codigo" name="codigo" readonly required value="{{ sku_sugerido }}">
+                        <small class="text-muted">El SKU se genera automáticamente según la categoría.</small>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="p-3 border rounded shadow-sm mb-3">
+                        <label for="descripcion" class="form-label">Descripción <span style="color:#43cea2">*</span></label>
+                        <textarea class="form-control" id="descripcion" name="descripcion" required></textarea>
+                    </div>
+                    <div class="p-3 border rounded shadow-sm mb-3">
+                        <label for="ubicacion" class="form-label">Ubicación física <span style="color:#43cea2">*</span></label>
+                        <input type="text" class="form-control" id="ubicacion" name="ubicacion" required>
+                    </div>
+                    <div class="p-3 border rounded shadow-sm mb-3">
+                        <label for="estado" class="form-label">Estado <span style="color:#43cea2">*</span></label>
+                        <select class="form-select" id="estado" name="estado" required>
+                            <option value="">Selecciona estado</option>
+                            <option value="activo">Activo</option>
+                            <option value="inactivo">Inactivo</option>
+                            <option value="nuevo">Nuevo</option>
+                            <option value="usado">Usado</option>
+                        </select>
+                    </div>
+                    <div class="p-3 border rounded shadow-sm mb-3">
+                        <label for="imagen" class="form-label">Imagen del producto <span style="color:#43cea2">*</span></label>
+                        <input type="file" class="form-control" id="imagen" name="imagen" accept="image/*" required>
+                    </div>
+                </div>
+            </div>
+            <div class="mb-4 text-center">
+                <button type="submit" class="btn btn-success btn-lg px-5">Guardar producto</button>
+                <a href="{{ url_for('inventarios.productos') }}" class="btn btn-secondary btn-lg ms-2 px-5">Cancelar</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

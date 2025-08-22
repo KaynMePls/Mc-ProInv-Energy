@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Factura {{ factura.numero_factura }}</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            font-size: 14px;
+            color: #222;
+        }
+        
+        .factura-box {
+            max-width: 800px;
+            margin: auto;
+            padding: 30px;
+            border: 1px solid #eee;
+            background: #fff;
+        }
+        
+        .logo {
+            width: 180px;
+            margin-bottom: 20px;
+        }
+        
+        .datos-empresa {
+            margin-bottom: 20px;
+        }
+        
+        .datos-cliente,
+        .resumen {
+            margin-top: 20px;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        
+        th,
+        td {
+            border: 1px solid #333;
+            padding: 8px;
+            text-align: left;
+        }
+        
+        th {
+            background: #eee;
+        }
+        
+        .total {
+            font-weight: bold;
+            font-size: 16px;
+        }
+        
+        .text-right {
+            text-align: right;
+        }
+        
+        .footer {
+            margin-top: 40px;
+            font-size: 13px;
+            color: #888;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="factura-box">
+        <!-- Logo y datos empresa -->
+        <img src="{{ url_for('static', filename='Solarium.png') }}" alt="Logo Empresa" class="logo">
+        <div class="datos-empresa">
+            <h2>MC Tecnologia Y Solarium Energy</h2>
+            <p>NIT: 900.939.805-8</p>
+            <p>Dirección: Carrera 13 # 32-93 Oficina 313 Torre 3 , Bogota</p>
+            <p>Teléfono: +57 316 048 40 37</p>
+            <p>Email: info@solariumenergy.co</p>
+        </div>
+        <hr>
+        <h3>Factura #{{ factura.numero_factura }}</h3>
+        <p><strong>Fecha de emisión:</strong> {{ factura.fecha_emision.strftime('%d/%m/%Y %H:%M') }}</p>
+        <div class="datos-cliente">
+            <h4>Datos del cliente</h4>
+            <p><strong>Nombre:</strong> {{ factura.cliente.nombre }}</p>
+            <p><strong>Email:</strong> {{ factura.cliente.email }}</p>
+            <p><strong>Teléfono:</strong> {{ factura.cliente.telefono }}</p>
+            <p><strong>Dirección:</strong> {{ factura.cliente.direccion }}</p>
+        </div>
+        <table>
+            <thead>
+                <tr>
+                    <th>Producto/Servicio</th>
+                    <th>Cantidad</th>
+                    <th>Precio unitario</th>
+                    <th>Subtotal</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for detalle in factura.detalles %}
+                <tr>
+                    <td>
+                        {% if detalle.componente_id and detalle.componente %} {{ detalle.componente.nombre }} {% elif detalle.servicio_id and detalle.servicio %} {{ detalle.servicio.nombre }} {% else %} - {% endif %}
+                    </td>
+                    <td>{{ detalle.cantidad }}</td>
+                    <td>${{ detalle.precio_unitario }}</td>
+                    <td>${{ detalle.subtotal }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        <div class="resumen">
+            <p class="text-right">Subtotal: ${{ factura.subtotal }}</p>
+            <p class="text-right">IVA: ${{ factura.iva }}</p>
+            <p class="text-right total">Total: ${{ factura.total }}</p>
+        </div>
+        <a href="{{ url_for('cliente.descargar_factura_pdf', id=factura.id) }}" class="btn btn-primary mb-3">Descargar PDF</a>
+        <div class="footer">
+            <p>Gracias por su compra.</p>
+            <p>Para cualquier consulta, contacte a nuestro servicio al cliente.</p>
+            <p>Atentamente,<br>MC Proinv Energy y Solarium Energy</p>
+        </div>
+    </div>
+</body>
+
+</html>

@@ -1,0 +1,121 @@
+{% extends "base.html" %} {% block content %}
+<style>
+    .compras-container {
+        max-width: 900px;
+        margin: 40px auto;
+        background: #fff;
+        border-radius: 14px;
+        box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
+        padding: 36px 40px 28px 40px;
+    }
+    
+    .compras-title {
+        font-family: 'Montserrat', Arial, sans-serif;
+        font-weight: 700;
+        font-size: 2.1em;
+        color: #1e2a38;
+        margin-bottom: 18px;
+        letter-spacing: 1px;
+    }
+    
+    .compras-table th {
+        background: #f0f4f8;
+        color: #222;
+        font-weight: 700;
+        border-bottom: 2px solid #eaeaea;
+    }
+    
+    .compras-table td,
+    .compras-table th {
+        vertical-align: middle;
+        padding: 12px 10px;
+    }
+    
+    .compras-table tr {
+        transition: background 0.2s;
+    }
+    
+    .compras-table tr:hover {
+        background: #f8fafc;
+    }
+    
+    .badge-factura {
+        font-size: 1em;
+        padding: 6px 18px;
+        border-radius: 16px;
+        font-weight: 600;
+        background: #d4f8e8;
+        color: #1e7e34;
+        letter-spacing: 0.5px;
+    }
+    
+    .btn-volver {
+        margin-top: 32px;
+        padding: 12px 32px;
+        border-radius: 8px;
+        background: #e0e0e0;
+        color: #222;
+        text-decoration: none;
+        font-weight: 600;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+        transition: background 0.2s;
+        display: inline-block;
+    }
+    
+    .btn-volver:hover {
+        background: #d1e7fd;
+        color: #0d6efd;
+    }
+    
+    .ver-btn {
+        background: #0d6efd;
+        color: #fff;
+        border: none;
+        border-radius: 6px;
+        padding: 7px 18px;
+        font-weight: 600;
+        text-decoration: none;
+        transition: background 0.2s;
+        margin-left: 10px;
+    }
+    
+    .ver-btn:hover {
+        background: #084298;
+        color: #fff;
+    }
+</style>
+<div class="compras-container">
+    <div class="compras-title">🧾 Historial de compras</div>
+    <table class="table compras-table">
+        <thead>
+            <tr>
+                <th>Número de factura</th>
+                <th>Fecha</th>
+                <th>Total</th>
+                <th>Acciones</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for factura in facturas %}
+            <tr>
+                <td>
+                    <span class="badge-factura">{{ factura.numero_factura }}</span>
+                </td>
+                <td>{{ factura.fecha_emision.strftime('%d/%m/%Y %H:%M') }}</td>
+                <td>${{ factura.total|miles }}</td>
+                <td>
+                    <a href="{{ url_for('cliente.ver_factura', id=factura.id) }}" class="ver-btn">Ver detalle</a>
+                </td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="4" class="text-muted" style="font-size:1.1em;">No tienes compras registradas.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    <div style="text-align:center;">
+        <a href="{{ url_for('cliente.dashboard') }}" class="btn-volver">← Volver al Marketplace</a>
+    </div>
+</div>
+{% endblock %}

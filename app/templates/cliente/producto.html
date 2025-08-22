@@ -1,0 +1,202 @@
+{% extends "base.html" %} {% block content %}
+<style>
+    .producto-main {
+        background: linear-gradient(120deg, #e3f2fd 0%, #fff 100%);
+        border-radius: 18px;
+        box-shadow: 0 6px 32px rgba(25, 118, 210, 0.10);
+        padding: 2.5rem 2rem;
+        margin-top: 2rem;
+    }
+    
+    .producto-img {
+        max-width: 100%;
+        max-height: 340px;
+        object-fit: cover;
+        border-radius: 16px;
+        box-shadow: 0 2px 12px rgba(25, 118, 210, 0.10);
+        background: #f4f4f4;
+    }
+    
+    .producto-title {
+        font-size: 2.1em;
+        font-weight: 800;
+        color: #1976d2;
+        margin-bottom: 10px;
+        letter-spacing: 1px;
+    }
+    
+    .producto-precio {
+        font-size: 1.5em;
+        font-weight: 700;
+        color: #388e3c;
+        margin-bottom: 18px;
+    }
+    
+    .producto-desc {
+        font-size: 1.1em;
+        color: #333;
+        margin-bottom: 18px;
+    }
+    
+    .producto-ficha {
+        background: #e3f2fd;
+        border-radius: 12px;
+        padding: 1.2rem;
+        margin-bottom: 18px;
+        font-size: 1em;
+    }
+    
+    .producto-btn {
+        font-size: 1.1em;
+        padding: 12px 32px;
+        border-radius: 30px;
+        font-weight: 700;
+        box-shadow: 0 2px 8px rgba(25, 118, 210, 0.10);
+        border: none;
+        transition: background 0.2s, color 0.2s, transform 0.15s;
+    }
+    
+    .producto-btn:hover {
+        background: #1976d2;
+        color: #fff;
+        transform: scale(1.06);
+    }
+    
+    .badge-stock {
+        font-size: 1em;
+        font-weight: 700;
+        border-radius: 12px;
+        padding: 7px 18px;
+        background: linear-gradient(90deg, #388e3c 60%, #81c784 100%);
+        color: #fff;
+        margin-right: 10px;
+    }
+    
+    .badge-stock.bg-danger {
+        background: linear-gradient(90deg, #d32f2f 60%, #ffcdd2 100%) !important;
+        color: #fff;
+    }
+    
+    .badge-categoria {
+        font-size: 1em;
+        font-weight: 700;
+        border-radius: 12px;
+        padding: 7px 18px;
+        background: linear-gradient(90deg, #1976d2 60%, #64b5f6 100%);
+        color: #fff;
+    }
+    
+    .galeria-mini img {
+        height: 60px;
+        width: 90px;
+        object-fit: cover;
+        border-radius: 8px;
+        border: 2px solid #e3f2fd;
+        margin-right: 8px;
+        margin-bottom: 8px;
+        transition: box-shadow 0.2s;
+    }
+    
+    .galeria-mini img:hover {
+        box-shadow: 0 2px 12px #1976d2;
+        border-color: #1976d2;
+    }
+    
+    .relacionados-section {
+        margin-top: 3rem;
+        background: #f8fafc;
+        border-radius: 16px;
+        box-shadow: 0 2px 12px rgba(25, 118, 210, 0.06);
+        padding: 2rem;
+    }
+    
+    .relacionado-card {
+        background: #fff;
+        border-radius: 12px;
+        box-shadow: 0 2px 8px rgba(25, 118, 210, 0.07);
+        padding: 1rem 1.2rem;
+        margin-bottom: 1.2rem;
+        text-align: center;
+        transition: transform 0.15s;
+    }
+    
+    .relacionado-card:hover {
+        transform: scale(1.04);
+        box-shadow: 0 6px 24px rgba(25, 118, 210, 0.13);
+    }
+    
+    .relacionado-img {
+        height: 80px;
+        width: 120px;
+        object-fit: cover;
+        border-radius: 8px;
+        margin-bottom: 10px;
+        background: #e3f2fd;
+    }
+</style>
+<div class="container producto-main">
+    <div class="row">
+        <div class="col-md-5 mb-4 mb-md-0">
+            <img src="{{ producto.imagen_url or 'https://via.placeholder.com/400x300' }}" alt="{{ producto.nombre }}" class="producto-img w-100"> {% if producto.galeria %}
+            <div class="galeria-mini mt-3 d-flex flex-wrap">
+                {% for img in producto.galeria %}
+                <img src="{{ img }}" alt="Galería"> {% endfor %}
+            </div>
+            {% endif %}
+        </div>
+        <div class="col-md-7">
+            <div class="producto-title">{{ producto.nombre }}</div>
+            <div class="mb-2">
+                {% if producto.stock > 0 %}
+                <span class="badge-stock">Disponible: {{ producto.stock }}</span> {% else %}
+                <span class="badge-stock bg-danger">Sin stock</span> {% endif %}
+            </div>
+            <div class="producto-precio">${{ producto.precio|miles }}</div>
+            <div class="producto-desc">{{ producto.descripcion }}</div>
+            {% if producto.ficha_tecnica %}
+            <div class="producto-ficha">
+                <strong>Ficha técnica:</strong>
+                <ul class="mb-0">
+                    {% for item in producto.ficha_tecnica.split(';') %}
+                    <li>{{ item }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+            {% endif %} {% if producto.especificaciones %}
+            <div class="producto-ficha">
+                <strong>Especificaciones adicionales:</strong>
+                <ul class="mb-0">
+                    {% for item in producto.especificaciones.split(';') %}
+                    <li>{{ item }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+            {% endif %}
+            <form method="POST" action="{{ url_for('cliente.agregar_carrito') }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <input type="hidden" name="producto_id" value="{{ producto.id }}">
+                <button class="btn btn-primary producto-btn" type="submit" {% if producto.stock==0 %}disabled{% endif %}>🛒 Agregar al carrito</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Productos relacionados -->
+    {% if relacionados %}
+    <div class="relacionados-section mt-5">
+        <h4 style="font-weight:800; color:#1976d2;">Productos relacionados</h4>
+        <div class="row">
+            {% for rel in relacionados %}
+            <div class="col-md-4">
+                <div class="relacionado-card">
+                    <img src="{{ rel.imagen_url or 'https://via.placeholder.com/120x80' }}" alt="{{ rel.nombre }}" class="relacionado-img">
+                    <div class="fw-bold mb-1">{{ rel.nombre }}</div>
+                    <div class="text-success mb-2">${{ rel.precio|miles }}</div>
+                    <a href="{{ url_for('cliente.ver_producto', id=rel.id) }}" class="btn btn-outline-primary btn-sm">Ver producto</a>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

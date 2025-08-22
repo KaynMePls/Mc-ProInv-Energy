@@ -1,0 +1,80 @@
+{% extends "base.html" %} {% block content %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-7 col-md-10">
+            <div class="card shadow-lg border-0 rounded-4">
+                <div class="card-header bg-gradient bg-primary text-white d-flex align-items-center justify-content-between rounded-top-4 py-3 px-4">
+                    <div class="d-flex align-items-center gap-3">
+                        <img src="{{ url_for('static', filename='Solarium.png') }}" alt="Logo Empresa" style="height:150px; width:auto; border-radius:12px; box-shadow:0 2px 8px rgba(0,0,0,0.10);">
+                        <span class="fw-bold fs-5">
+                            <i class="bi bi-pencil-square me-2"></i>Editar Transacción Contable
+                        </span>
+                    </div>
+                    <a href="{{ url_for('contabilidad.dashboard') }}" class="btn btn-light btn-sm rounded-pill px-3 fw-semibold shadow-sm" data-bs-toggle="tooltip" title="Volver al Dashboard">
+                        <i class="bi bi-arrow-left"></i>
+                    </a>
+                </div>
+                <div class="card-body px-4 py-4 bg-white">
+                    {% with messages = get_flashed_messages(with_categories=true) %} {% if messages %} {% for category, message in messages %}
+                    <div class="alert alert-{{ category }} alert-dismissible fade show mb-3" role="alert">
+                        <i class="bi bi-info-circle me-2"></i>{{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Cerrar"></button>
+                    </div>
+                    {% endfor %} {% endif %} {% endwith %}
+                    <form method="POST" action="{{ url_for('contabilidad.editar_transaccion', transaccion_id=transaccion.id) }}" novalidate autocomplete="off">
+                        {{ form.hidden_tag() }}
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label for="tipo" class="form-label fw-semibold">Tipo <i class="bi bi-info-circle" data-bs-toggle="tooltip" title="Selecciona si es ingreso o egreso"></i></label> {{ form.tipo(class="form-select rounded-pill shadow-sm",
+                                id="tipo") }}
+                                <div class="help-text">Elige el tipo de movimiento financiero.</div>
+                                {% if form.tipo.errors %}
+                                <div class="text-danger small mt-1">{{ form.tipo.errors[0] }}</div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-6">
+                                <label for="monto" class="form-label fw-semibold">Monto <i class="bi bi-currency-dollar"></i></label> {{ form.monto(class="form-control rounded-pill shadow-sm", placeholder="Ej: 1000000") }}
+                                <div class="help-text">Ingresa el monto exacto, sin puntos ni comas.</div>
+                                {% if form.monto.errors %}
+                                <div class="text-danger small mt-1">{{ form.monto.errors[0] }}</div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-6">
+                                <label for="fecha" class="form-label fw-semibold">Fecha <i class="bi bi-calendar-event"></i></label> {{ form.fecha(class="form-control rounded-pill shadow-sm", placeholder="YYYY-MM-DD") }}
+                                <div class="help-text">Selecciona la fecha de la transacción.</div>
+                                {% if form.fecha.errors %}
+                                <div class="text-danger small mt-1">{{ form.fecha.errors[0] }}</div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-6">
+                                <label for="categoria" class="form-label fw-semibold">Categoría <i class="bi bi-tags"></i></label> {{ form.categoria(class="form-select rounded-pill shadow-sm", id="categoria") }}
+                                <div class="help-text">Clasifica la transacción para mejor análisis.</div>
+                                {% if form.categoria.errors %}
+                                <div class="text-danger small mt-1">{{ form.categoria.errors[0] }}</div>
+                                {% endif %}
+                            </div>
+                            <div class="col-12">
+                                <label for="descripcion" class="form-label fw-semibold">Descripción <i class="bi bi-card-text"></i></label> {{ form.descripcion(class="form-control rounded-4 shadow-sm", rows="2", placeholder="Describe la transacción...")
+                                }}
+                                <div class="help-text">Agrega detalles relevantes para futuras consultas.</div>
+                                {% if form.descripcion.errors %}
+                                <div class="text-danger small mt-1">{{ form.descripcion.errors[0] }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="d-flex justify-content-end gap-2 mt-4">
+                            {{ form.submit(class="btn btn-success rounded-pill px-4 fw-bold shadow-sm", value="Guardar Cambios") }}
+                            <a href="{{ url_for('contabilidad.dashboard') }}" class="btn btn-secondary rounded-pill px-4 fw-semibold shadow-sm">
+                                <i class="bi bi-x-circle me-1"></i>Cancelar
+                            </a>
+                        </div>
+                    </form>
+                </div>
+                <div class="card-footer bg-light rounded-bottom-4 text-end small text-muted px-4 py-2">
+                    <i class="bi bi-shield-check"></i> Tus datos están protegidos y se guardan de forma segura.
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css"> {% endblock %}

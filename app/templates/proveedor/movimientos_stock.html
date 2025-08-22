@@ -1,0 +1,91 @@
+{% extends "base.html" %} {% block content %}
+<style>
+    body {
+        background: linear-gradient(135deg, #f5faff 0%, #e3e9f7 100%);
+        min-height: 100vh;
+        position: relative;
+    }
+    
+    .bg-shape-1,
+    .bg-shape-2 {
+        position: fixed;
+        z-index: 0;
+        opacity: 0.13;
+        pointer-events: none;
+        filter: blur(2px);
+        border-radius: 50%;
+        animation: float 12s ease-in-out infinite alternate;
+    }
+    
+    .bg-shape-1 {
+        width: 340px;
+        height: 340px;
+        background: radial-gradient(circle at 30% 30%, #0d6efd 60%, #fff0 100%);
+        top: -80px;
+        left: -120px;
+        animation-delay: 0s;
+    }
+    
+    .bg-shape-2 {
+        width: 220px;
+        height: 220px;
+        background: radial-gradient(circle at 70% 70%, #ffc107 60%, #fff0 100%);
+        bottom: 60px;
+        right: -80px;
+        animation-delay: 2s;
+    }
+    
+    @keyframes float {
+        0% {
+            transform: translateY(0) scale(1);
+        }
+        100% {
+            transform: translateY(30px) scale(1.08);
+        }
+    }
+</style>
+<div class="bg-shape-1"></div>
+<div class="bg-shape-2"></div>
+<div class="container mt-5">
+    <h3 class="fw-bold mb-4 text-primary">
+        <i class="bi bi-arrow-left-right me-2"></i>Historial de Movimientos de Stock - {{ producto.nombre }}
+    </h3>
+    <div class="card shadow border-0 rounded-4">
+        <div class="card-body">
+            {% if movimientos %}
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Fecha</th>
+                            <th>Tipo</th>
+                            <th>Cantidad</th>
+                            <th>Observación</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for mov in movimientos %}
+                        <tr>
+                            <td>{{ mov.fecha.strftime('%Y-%m-%d') }}</td>
+                            <td>
+                                <span class="badge {% if mov.tipo == 'entrada' %}bg-success{% else %}bg-danger{% endif %} rounded-pill">
+                                    {{ mov.tipo|capitalize }}
+                                </span>
+                            </td>
+                            <td>{{ mov.cantidad }}</td>
+                            <td>{{ mov.observacion or '-' }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="alert alert-info mb-0">No hay movimientos registrados para este producto.</div>
+            {% endif %}
+            <a href="{{ url_for('proveedor.detalle_producto', producto_id=producto.id) }}" class="btn btn-outline-secondary rounded-pill mt-3">
+                <i class="bi bi-arrow-left"></i> Volver al producto
+            </a>
+        </div>
+    </div>
+</div>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css"> {% endblock %}

@@ -1,0 +1,368 @@
+{% extends "base.html" %} {% block content %}
+<style>
+    body {
+        background: linear-gradient(120deg, #23272f 0%, #1a1d23 100%);
+        min-height: 100vh;
+    }
+    
+    .dashboard-title {
+        color: #1976d2;
+        letter-spacing: 1px;
+        font-weight: 700;
+    }
+    
+    .product-card {
+        border-radius: 1.2rem;
+        box-shadow: 0 2px 16px 0 rgba(60, 72, 88, .08);
+        border: none;
+        transition: transform 0.15s, box-shadow 0.15s;
+        background: #23272f;
+        margin-bottom: 1.5rem;
+        min-height: 320px;
+        position: relative;
+        color: #e3e6eb;
+    }
+    
+    .product-card:hover {
+        transform: translateY(-6px) scale(1.03);
+        box-shadow: 0 6px 32px 0 rgba(60, 72, 88, .16);
+        background: #1a1d23;
+    }
+    
+    .product-img-thumb {
+        max-width: 80px;
+        border-radius: 10px;
+        border: 1px solid #38404a;
+        background: #181a1f;
+        padding: 2px;
+        margin-bottom: 0.5rem;
+        box-shadow: 0 2px 8px 0 rgba(25, 118, 210, .08);
+    }
+    
+    .badge-estado {
+        font-size: 0.9em;
+        padding: 0.4em 0.8em;
+        border-radius: 1em;
+        margin-bottom: 0.3em;
+        animation: pulse 2s infinite;
+    }
+    
+    @keyframes pulse {
+        0% {
+            box-shadow: 0 0 0 0 rgba(33, 150, 243, 0.2);
+        }
+        70% {
+            box-shadow: 0 0 0 10px rgba(33, 150, 243, 0);
+        }
+        100% {
+            box-shadow: 0 0 0 0 rgba(33, 150, 243, 0);
+        }
+    }
+    
+    .product-actions .btn {
+        margin: 0 2px;
+    }
+    
+    .table-responsive {
+        overflow-x: auto;
+        /* Quita min-width aquí */
+        width: 100%;
+    }
+    
+    .table {
+        min-width: 1400px;
+        background: #f8f9fa !important;
+        color: #23272f !important;
+    }
+    
+    .table thead {
+        background: #e3e6eb !important;
+        color: #1976d2 !important;
+    }
+    
+    .table-hover tbody tr:hover {
+        background: #e3e9f7 !important;
+    }
+    
+    .table-bordered th,
+    .table-bordered td {
+        border-color: #38404a !important;
+    }
+    
+    .table td,
+    .table th {
+        padding-top: 0.85em !important;
+        padding-bottom: 0.85em !important;
+        vertical-align: middle !important;
+        white-space: nowrap;
+    }
+    
+    .table .text-break {
+        white-space: normal;
+    }
+    
+    @media (min-width: 992px) {
+        .product-cards-row {
+            display: none;
+        }
+        .table-responsive {
+            display: block;
+        }
+    }
+    
+    @media (max-width: 991px) {
+        .table-responsive {
+            display: none;
+        }
+    }
+    
+    .form-control,
+    .form-select {
+        border-radius: 14px;
+        font-size: 1.1em;
+        padding: 0.75em 1em;
+        background: #23272f;
+        color: #fff;
+        border: 1px solid #38404a;
+    }
+    
+    .form-control:focus,
+    .form-select:focus {
+        background: #23272f;
+        color: #fff;
+        border-color: #7bb0ff;
+        box-shadow: 0 0 0 2px #7bb0ff33;
+    }
+    
+    .form-control::placeholder {
+        color: #b0b6be;
+        opacity: 1;
+    }
+    
+    .btn-outline-secondary,
+    .btn-secondary {
+        border-radius: 18px;
+        font-weight: 700;
+    }
+    
+    .btn-danger {
+        border-radius: 18px;
+        font-weight: 700;
+    }
+    
+    .btn-primary {
+        font-weight: 700;
+        border-radius: 18px;
+    }
+    
+    .btn-warning {
+        border-radius: 18px;
+        font-weight: 700;
+    }
+    
+    .btn-secondary {
+        background: #23272f;
+        color: #7bb0ff;
+        border: 1px solid #7bb0ff;
+    }
+    
+    .btn-secondary:hover {
+        background: #7bb0ff;
+        color: #23272f;
+    }
+</style>
+<div class="container mt-5">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2 class="dashboard-title"><i class="bi bi-box-seam"></i> Listado de Productos</h2>
+        <div>
+            <a href="{{ url_for('inventarios.dashboard') }}" class="btn btn-outline-secondary me-2">
+                <i class="bi bi-arrow-left"></i> Regresar al Dashboard
+            </a>
+            <a href="{{ url_for('inventarios.nuevo_producto') }}" class="btn btn-danger">
+                <i class="bi bi-plus-circle"></i> Agregar producto
+            </a>
+        </div>
+    </div>
+    <!-- Buscador y filtros -->
+    <form method="get" class="row g-2 mb-3">
+        <div class="col-md-4">
+            <input type="text" name="buscar" class="form-control" placeholder="Buscar por nombre o categoría" value="{{ request.args.get('buscar', '') }}">
+        </div>
+        <div class="col-md-3">
+            <select name="categoria" class="form-select">
+                <option value="">Todas las categorías</option>
+                {% for categoria in categorias %}
+                    <option value="{{ categoria.nombre }}" {% if request.args.get('categoria') == categoria.nombre %}selected{% endif %}>{{ categoria.nombre }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-md-3">
+            <select name="stock" class="form-select">
+                <option value="">Todos los stocks</option>
+                <option value="bajo" {% if request.args.get('stock') == 'bajo' %}selected{% endif %}>Stock bajo</option>
+                <option value="alto" {% if request.args.get('stock') == 'alto' %}selected{% endif %}>Stock alto</option>
+            </select>
+        </div>
+        <div class="col-md-2">
+            <button type="submit" class="btn btn-secondary w-100"><i class="bi bi-funnel"></i> Filtrar</button>
+        </div>
+    </form>
+    <!-- Exportar listado -->
+    <div class="mb-2">
+        <a href="{{ url_for('inventarios.exportar_excel', buscar=request.args.get('buscar', ''), categoria=request.args.get('categoria', ''), stock=request.args.get('stock', '')) }}" class="btn btn-outline-success btn-sm">
+            <i class="bi bi-file-earmark-excel"></i> Exportar a Excel
+        </a>
+        <a href="{{ url_for('inventarios.exportar_pdf', buscar=request.args.get('buscar', ''), categoria=request.args.get('categoria', ''), stock=request.args.get('stock', '')) }}" class="btn btn-outline-danger btn-sm">
+            <i class="bi bi-file-earmark-pdf"></i> Exportar a PDF
+        </a>
+    </div>
+    <!-- Mensajes de éxito/error -->
+    {% with messages = get_flashed_messages(with_categories=true) %} {% if messages %} {% for category, message in messages %}
+    <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+        {{ message }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+    {% endfor %} {% endif %} {% endwith %}
+    <!-- Cards para móviles/tablet -->
+    <div class="row product-cards-row">
+        {% for producto in productos %}
+        <div class="col-12 mb-3">
+            <div class="card product-card p-3">
+                <div class="d-flex align-items-center mb-2">
+                    {% if producto.imagen_url %} {% if producto.imagen_url.startswith('http') %}
+                    <img src="{{ producto.imagen_url }}" alt="Imagen" class="product-img-thumb me-3"> {% else %}
+                    <img src="{{ url_for('static', filename='img_productos/' ~ producto.imagen_url) }}" alt="Imagen" class="product-img-thumb me-3"> {% endif %} {% else %}
+                    <div class="product-img-thumb me-3 d-flex align-items-center justify-content-center" style="height:60px;width:60px;background:#181a1f;">
+                        <i class="bi bi-image text-muted" style="font-size:2em;"></i>
+                    </div>
+                    {% endif %}
+                    <div>
+                        <h5 class="mb-0">{{ producto.nombre }}</h5>
+                        <small class="text-muted">{{ producto.categoria.nombre if producto.categoria else 'Sin categoría' }}</small>
+                    </div>
+                    <div class="ms-auto">
+                        <span class="badge badge-estado {% if producto.estado == 'activo' %}bg-success{% elif producto.estado == 'inactivo' %}bg-secondary{% elif producto.estado == 'nuevo' %}bg-primary{% else %}bg-warning text-dark{% endif %}">
+                            {{ producto.estado|capitalize }}
+                        </span>
+                    </div>
+                </div>
+                <div class="mb-2">
+                    <span class="fw-bold">Stock:</span>
+                    <span class="{% if producto.stock < 5 %}text-danger fw-bold{% endif %}">
+                        {{ producto.stock }}
+                        {% if producto.stock < 5 %}
+                            <span class="badge bg-danger ms-2">Bajo</span> {% endif %}
+                    </span>
+                    <span class="ms-3"><i class="bi bi-currency-dollar"></i> {{ producto.precio or 'N/A' }}</span>
+                </div>
+                <div class="mb-2">
+                    <span class="me-3"><i class="bi bi-truck"></i> {{ producto.proveedor.nombre if producto.proveedor else 'N/A' }}</span>
+                    <span class="me-3"><i class="bi bi-calendar2-week"></i>
+                        {{ producto.fecha_actualizacion.strftime('%Y-%m-%d %H:%M') if producto.fecha_actualizacion else 'N/A' }}
+                    </span>
+                    <span class="me-3"><i class="bi bi-upc-scan"></i> {{ producto.sku or 'N/A' }}</span>
+                </div>
+                <div class="mb-2">
+                    <span class="me-3"><i class="bi bi-geo-alt"></i> {{ producto.ubicacion or 'N/A' }}</span>
+                </div>
+                <div class="mb-2" style="font-size:0.95em; color:#fff;">
+                    <i class="bi bi-card-text"></i> {{ producto.descripcion or 'Sin descripción' }}
+                </div>
+                <div class="product-actions mt-2">
+                    <a href="{{ url_for('inventarios.editar_producto', producto_id=producto.id) }}" class="btn btn-sm btn-primary" title="Editar"><i class="bi bi-pencil"></i></a>
+                    <a href="{{ url_for('inventarios.editar_stock', producto_id=producto.id) }}" class="btn btn-sm btn-warning" title="Editar Stock"><i class="bi bi-arrow-up-square"></i></a>
+                    <form action="{{ url_for('inventarios.eliminar_producto', producto_id=producto.id) }}" method="post" style="display:inline;">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('¿Seguro que deseas eliminar este producto?');" title="Eliminar"><i class="bi bi-trash"></i></button>
+                    </form>
+                    <a href="{{ url_for('inventarios.detalle_producto', id=producto.id) }}" class="btn btn-sm btn-secondary" title="Ver"><i class="bi bi-eye"></i></a>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    <!-- Tabla para escritorio -->
+    <div class="table-responsive rounded shadow-sm">
+        <table class="table table-bordered table-hover align-middle mb-0 text-center">
+            <thead class="table-light">
+                <tr>
+                    <th style="min-width: 140px;"><i class="bi bi-sort-alpha-down"></i> Nombre</th>
+                    <th style="min-width: 120px;"><i class="bi bi-tags"></i> Categoría</th>
+                    <th style="min-width: 80px;"><i class="bi bi-stack"></i> Stock</th>
+                    <th style="min-width: 110px;"><i class="bi bi-currency-dollar"></i> Precio</th>
+                    <th style="min-width: 120px;"><i class="bi bi-truck"></i> Proveedor</th>
+                    <th style="min-width: 140px;"><i class="bi bi-calendar2-week"></i> Fecha de Actualización</th>
+                    <th style="min-width: 110px;"><i class="bi bi-upc-scan"></i> Código/SKU</th>
+                    <th style="min-width: 180px;white-space:normal;"><i class="bi bi-card-text"></i> Descripción</th>
+                    <th style="min-width: 110px;"><i class="bi bi-geo-alt"></i> Ubicación</th>
+                    <th style="min-width: 90px;"><i class="bi bi-award"></i> Estado</th>
+                    <th style="min-width: 90px;"><i class="bi bi-image"></i> Imagen</th>
+                    <th style="min-width: 120px;">Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for producto in productos %}
+                <tr class="{% if producto.stock < 5 %}table-warning{% endif %}">
+                    <td class="fw-bold">{{ producto.nombre }}</td>
+                    <td>{{ producto.categoria.nombre if producto.categoria else 'Sin categoría' }}</td>
+                    <td>
+                        <span class="{% if producto.stock < 5 %}text-danger fw-bold{% endif %}">
+                            {{ "{:,.0f}".format(producto.stock).replace(",", ".") if producto.stock is not none else 'N/A' }}
+                            {% if producto.stock < 5 %}
+                                <span class="badge bg-danger ms-2">Bajo</span> {% endif %}
+                        </span>
+                    </td>
+                    <td>
+                        <span class="text-success fw-semibold">
+                            ${{ "{:,.0f}".format(producto.precio).replace(",", ".") if producto.precio is not none else 'N/A' }}
+                        </span>
+                    </td>
+                    <td>{{ producto.proveedor.nombre if producto.proveedor else 'N/A' }}</td>
+                    <td>
+                        {{ producto.fecha_actualizacion.strftime('%Y-%m-%d %H:%M') if producto.fecha_actualizacion else 'N/A' }}
+                    </td>
+                    <td>{{ producto.sku or 'N/A' }}</td>
+                    <td class="text-break" style="max-width: 220px;white-space:normal;">{{ producto.descripcion or 'N/A' }}</td>
+                    <td>{{ producto.ubicacion or 'N/A' }}</td>
+                    <td>
+                        <span class="badge {% if producto.estado == 'activo' %}bg-success{% elif producto.estado == 'inactivo' %}bg-secondary{% elif producto.estado == 'nuevo' %}bg-primary{% else %}bg-warning text-dark{% endif %}">
+                            {{ producto.estado|capitalize }}
+                        </span>
+                    </td>
+                    <td>
+                        {% if producto.imagen_url %} {% if producto.imagen_url.startswith('http') %}
+                        <img src="{{ producto.imagen_url }}" alt="Imagen" class="product-img-thumb"> {% else %}
+                        <img src="{{ url_for('static', filename='img_productos/' ~ producto.imagen_url) }}" alt="Imagen" class="product-img-thumb"> {% endif %} {% else %}
+                        <span class="text-muted">N/A</span> {% endif %}
+                    </td>
+                    <td>
+                        <div class="btn-group" role="group">
+                            <a href="{{ url_for('inventarios.editar_producto', producto_id=producto.id) }}" class="btn btn-sm btn-primary" title="Editar"><i class="bi bi-pencil"></i></a>
+                            <a href="{{ url_for('inventarios.editar_stock', producto_id=producto.id) }}" class="btn btn-sm btn-warning" title="Editar Stock"><i class="bi bi-arrow-up-square"></i></a>
+                            <form action="{{ url_for('inventarios.eliminar_producto', producto_id=producto.id) }}" method="post" style="display:inline;">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('¿Seguro que deseas eliminar este producto?');" title="Eliminar"><i class="bi bi-trash"></i></button>
+                            </form>
+                            <a href="{{ url_for('inventarios.detalle_producto', id=producto.id) }}" class="btn btn-sm btn-secondary" title="Ver"><i class="bi bi-eye"></i></a>
+                            <form action="{{ url_for('inventarios.publicar_producto', producto_id=producto.id) }}" method="post" style="display:inline;">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"> {% if not producto.publicado %}
+                                <button type="submit" class="btn btn-sm btn-success" title="Publicar"><i class="bi bi-eye"></i></button> {% endif %}
+                            </form>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    <!-- Paginación -->
+    <nav>
+        <ul class="pagination justify-content-center mt-3">
+            <li class="page-item"><a class="page-link" href="#">Anterior</a></li>
+            <li class="page-item"><a class="page-link" href="#">1</a></li>
+            <li class="page-item"><a class="page-link" href="#">2</a></li>
+            <li class="page-item"><a class="page-link" href="#">Siguiente</a></li>
+        </ul>
+    </nav>
+</div>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css"> {% endblock %}

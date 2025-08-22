@@ -1,0 +1,24 @@
+.reporte-card {
+    position: relative;
+    overflow: hidden;
+}
+
+.reporte-card::before {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 340px;
+    height: 340px;
+    transform: translate(-50%, -50%);
+    background: url('/static/Solarium.png') no-repeat center center;
+    background-size: contain;
+    opacity: 0.07;
+    pointer-events: none;
+    z-index: 0;
+}
+
+.reporte-card>* {
+    position: relative;
+    z-index: 1;
+}

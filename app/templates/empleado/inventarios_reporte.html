@@ -1,0 +1,209 @@
+{% extends "base.html" %} {% block content %}
+<link rel="stylesheet" href="{{ url_for('static', filename='styles/reporte.css') }}">
+<style>
+    body {
+        background: linear-gradient(120deg, #23272f 0%, #1a1d23 100%);
+        min-height: 100vh;
+    }
+    
+    .reporte-card {
+        border-radius: 22px;
+        box-shadow: 0 8px 32px rgba(30, 41, 59, 0.18);
+        background: rgba(28, 32, 38, 0.98);
+        padding: 2.5rem 2.5rem 2rem 2.5rem;
+        max-width: 900px;
+        width: 100%;
+        color: #e3e6eb;
+        margin: 40px auto;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .reporte-title {
+        font-weight: 900;
+        font-size: 2.2em;
+        color: #7bb0ff;
+        text-align: center;
+        margin-bottom: 8px;
+        letter-spacing: 1px;
+        text-shadow: 0 2px 8px #181a1f;
+    }
+    
+    .reporte-section-title {
+        color: #43cea2;
+        font-size: 1.3em;
+        font-weight: 700;
+        margin-top: 2.2rem;
+        margin-bottom: 1rem;
+    }
+    
+    .kpi-badge {
+        font-size: 1.1em;
+        border-radius: 1em;
+        padding: 0.4em 1.2em;
+        margin-right: 0.7em;
+        font-weight: 700;
+    }
+    
+    .kpi-badge-total {
+        background: #1976d2;
+        color: #fff;
+    }
+    
+    .kpi-badge-valor {
+        background: #43cea2;
+        color: #23272f;
+    }
+    
+    .kpi-badge-categorias {
+        background: #7bb0ff;
+        color: #23272f;
+    }
+    
+    .kpi-badge-proveedores {
+        background: #ffb300;
+        color: #23272f;
+    }
+    
+    .table thead {
+        background: #181a1f;
+        color: #7bb0ff;
+    }
+    
+    .table-bordered th,
+    .table-bordered td {
+        border-color: #38404a !important;
+    }
+    
+    .table-hover tbody tr:hover {
+        background: #1a1d23;
+    }
+    
+    .badge-estado {
+        font-size: 0.95em;
+    }
+    
+    .btn {
+        border-radius: 16px;
+        font-weight: 700;
+    }
+    
+    .alert-warning {
+        background: #fff8e1;
+        color: #ff9800;
+        border: none;
+    }
+    
+    .alert-success {
+        background: #e8f5e9;
+        color: #43a047;
+        border: none;
+    }
+    
+    .reporte-footer {
+        color: #b0b6be;
+        font-size: 0.97em;
+    }
+</style>
+<div class="reporte-card">
+    <!-- Encabezado profesional -->
+    <div class="d-flex align-items-center justify-content-between mb-4">
+        <div></div>
+        <div class="text-end">
+            <div class="fw-bold" style="color:#ffffff;">MC Proinv</div>
+            <div class="text-white" style="font-size:0.97em;">Fecha: {{ fecha_reporte }}</div>
+        </div>
+    </div>
+    <h1 class="reporte-title mb-3">Reporte General de Inventario</h1>
+    <hr>
+    <p class="lead">
+        Estimado Administrador,<br> El presente documento ofrece una visión integral y actualizada del estado del inventario de la empresa. Aquí encontrará un resumen ejecutivo, indicadores clave, problemas detectados y recomendaciones para la gestión
+        eficiente de los recursos.
+    </p>
+    <p>
+        El análisis incluye la cantidad total de productos, el valor económico del inventario, la distribución por categorías y proveedores, así como alertas sobre posibles riesgos operativos.
+    </p>
+    <!-- KPIs destacados -->
+    <div class="mb-4">
+        <span class="kpi-badge kpi-badge-total"><i class="bi bi-box-seam"></i> {{ total_productos }} productos</span>
+        <span class="kpi-badge kpi-badge-valor"><i class="bi bi-currency-dollar"></i> ${{ "{:,.0f}".format(valor_inventario).replace(",", ".") }}</span>
+        <span class="kpi-badge kpi-badge-categorias"><i class="bi bi-tags"></i> {{ total_categorias }} categorías</span>
+        <span class="kpi-badge kpi-badge-proveedores"><i class="bi bi-truck"></i> {{ total_proveedores }} proveedores</span>
+    </div>
+    <!-- Alertas y problemas -->
+    <div class="reporte-section-title"><i class="bi bi-exclamation-triangle"></i> Alertas y Problemas Detectados</div>
+    {% if productos_stock_bajo > 0 or productos_agotados > 0 or productos_sin_proveedor > 0 or productos_sin_categoria > 0 %}
+    <ul>
+        <li><strong>Productos con stock bajo:</strong> <span class="text-warning fw-bold">{{ productos_stock_bajo }}</span></li>
+        <li><strong>Productos agotados:</strong> <span class="text-danger fw-bold">{{ productos_agotados }}</span></li>
+        <li><strong>Productos sin proveedor asignado:</strong> <span class="text-info fw-bold">{{ productos_sin_proveedor }}</span></li>
+        <li><strong>Productos sin categoría:</strong> <span class="text-info fw-bold">{{ productos_sin_categoria }}</span></li>
+    </ul>
+    {% else %}
+    <div class="alert alert-success">No se detectaron problemas críticos en el inventario.</div>
+    {% endif %}
+    <!-- Indicadores clave -->
+    <div class="reporte-section-title"><i class="bi bi-bar-chart"></i> Indicadores Clave</div>
+    <ul>
+        <li><strong>Producto con mayor stock:</strong> {{ producto_mayor_stock.nombre }} ({{ producto_mayor_stock.stock }} unidades)</li>
+        <li><strong>Producto con menor stock:</strong> {{ producto_menor_stock.nombre }} ({{ producto_menor_stock.stock }} unidades)</li>
+        <li><strong>Producto más caro:</strong> {{ producto_mas_caro.nombre }} (${{ producto_mas_caro.precio }})</li>
+        <li><strong>Producto más barato:</strong> {{ producto_mas_barato.nombre }} (${{ producto_mas_barato.precio }})</li>
+        <li><strong>Categoría con más productos:</strong> {{ categoria_top.nombre if categoria_top else 'N/A' }} ({{ categoria_top.cantidad if categoria_top else '0' }} productos)</li>
+        <li><strong>Proveedor con más productos:</strong> {{ proveedor_top.nombre if proveedor_top else 'N/A' }} ({{ proveedor_top.cantidad if proveedor_top else '0' }} productos)</li>
+    </ul>
+    <!-- Detalle de productos críticos -->
+    <div class="reporte-section-title"><i class="bi bi-clipboard-x"></i> Detalle de Productos Críticos</div>
+    <div class="table-responsive mb-4">
+        <table class="table table-bordered table-sm align-middle">
+            <thead>
+                <tr>
+                    <th>Nombre</th>
+                    <th>Categoría</th>
+                    <th>Proveedor</th>
+                    <th>Stock</th>
+                    <th>Estado</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for producto in productos_criticos %}
+                <tr {% if producto.stock < 5 %}style="background:#fff3cd;color:#ff9800;" {% endif %}>
+                    <td>{{ producto.nombre }}</td>
+                    <td>{{ producto.categoria.nombre if producto.categoria else 'Sin categoría' }}</td>
+                    <td>
+                        {% set proveedor = usuarios | selectattr('id', 'equalto', producto.proveedor_id) | first %} {{ proveedor.nombre if proveedor else 'Sin proveedor' }}
+                    </td>
+                    <td>{{ producto.stock }}</td>
+                    <td>
+                        <span class="badge badge-estado {% if producto.estado == 'activo' %}bg-success{% elif producto.estado == 'inactivo' %}bg-secondary{% elif producto.estado == 'nuevo' %}bg-primary{% else %}bg-warning text-dark{% endif %}">
+                            {{ producto.estado|capitalize }}
+                        </span>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    <!-- Recomendaciones -->
+    <div class="reporte-section-title"><i class="bi bi-lightbulb"></i> Recomendaciones</div>
+    <ul>
+        {% for recomendacion in recomendaciones %}
+        <li>{{ recomendacion }}</li>
+        {% endfor %}
+    </ul>
+    <!-- Acciones -->
+    <div class="mb-4 text-end">
+        <a href="{{ url_for('inventarios.exportar_pdf_reporte_general') }}" class="btn btn-danger"><i class="bi bi-file-earmark-pdf"></i> Descargar PDF</a>
+        <a href="{{ url_for('inventarios.exportar_excel_reporte_general') }}" class="btn btn-success"><i class="bi bi-file-earmark-excel"></i> Descargar Excel</a>
+        <a href="{{ url_for('inventarios.reporte_manual') }}" class="btn btn-primary"><i class="bi bi-pencil-square"></i> Realizar reporte manual</a>
+        <a href="{{ url_for('inventarios.dashboard') }}" class="btn btn-secondary"><i class="bi bi-arrow-left"></i> Regresar al dashboard</a>
+    </div>
+    <!-- Cierre profesional -->
+    <div class="mt-5 reporte-footer">
+        <hr>
+        <p>
+            Este reporte ha sido generado automáticamente por el sistema de gestión de inventarios MC Proinv.<br> Para cualquier consulta adicional, contacte al área de operaciones o tecnología.
+        </p>
+    </div>
+</div>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css"> {% endblock %}

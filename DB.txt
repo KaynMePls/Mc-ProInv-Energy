@@ -1,0 +1,301 @@
+-- ======================================= --
+-- Creacion Base de Datos Mc ProInv Energy --
+-- Sistema Completo Proyecto SENA --
+-- ======================================= --
+
+create database If not exists mc_proinv_energy
+character set utf8mb4 collate utf8mb4_unicode_ci
+
+use mc_proinv_energy
+
+-- ======================
+-- TABLA DE USUARIOS (ROLES)
+-- ======================
+CREATE TABLE usuarios (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    documento VARCHAR(20) UNIQUE COMMENT 'DNI/NIT',
+    nombre VARCHAR(100) NOT NULL,
+    email VARCHAR(100) UNIQUE NOT NULL,
+    password VARCHAR(255) NOT NULL COMMENT 'Hash bcrypt',
+    rol ENUM('admin', 'proveedor', 'tecnico', 'inventario', 'contabilidad', 'cliente') NOT NULL,
+    especialidad VARCHAR(100) NULL,
+    telefono VARCHAR(15) NOT NULL,
+    direccion TEXT,
+    estado ENUM('activo', 'inactivo') DEFAULT 'activo',
+    fecha_registro TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    INDEX idx_rol (rol),
+    INDEX idx_estado (estado)
+) ENGINE=InnoDB;
+
+-- ======================
+-- TABLA DE CATEGORÍAS DE COMPONENTES
+-- ======================
+CREATE TABLE categorias_componentes (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    nombre VARCHAR(50) NOT NULL UNIQUE,
+    descripcion TEXT,
+    icono VARCHAR(30) DEFAULT 'fa-microchip',
+    nivel_prioridad TINYINT DEFAULT 1 COMMENT '1-5 para ordenamiento'
+) ENGINE=InnoDB;
+
+-- ======================
+-- TABLA DE COMPONENTES
+-- ======================
+CREATE TABLE componentes (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    sku VARCHAR(20) UNIQUE COMMENT 'MC-COMP-001',
+    nombre VARCHAR(200) NOT NULL,
+    descripcion TEXT,
+    precio INT NOT NULL COMMENT 'Precio en COP',
+    costo INT COMMENT 'Costo de adquisición',
+    stock INT NOT NULL DEFAULT 0,
+    stock_minimo INT DEFAULT 3,
+    categoria_id INT NOT NULL,
+    proveedor_id INT NOT NULL,
+    especificaciones JSON NOT NULL,
+    garantia_meses INT DEFAULT 12,
+    imagen_url VARCHAR(255) DEFAULT '/img/default-component.png',
+    fecha_actualizacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (categoria_id) REFERENCES categorias_componentes(id),
+    FOREIGN KEY (proveedor_id) REFERENCES usuarios(id),
+    FULLTEXT INDEX idx_busqueda (nombre, descripcion),
+    INDEX idx_categoria (categoria_id),
+    INDEX idx_proveedor (proveedor_id)
+) ENGINE=InnoDB;
+
+-- ======================
+-- TABLA DE SERVICIOS TÉCNICOS
+-- ======================
+CREATE TABLE servicios (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    codigo VARCHAR(15) UNIQUE COMMENT 'SV-ENS-001',
+    nombre VARCHAR(100) NOT NULL,
+    descripcion TEXT NOT NULL,
+    tipo ENUM('ensamblaje', 'soporte', 'mantenimiento', 'reparacion', 'diagnostico') NOT NULL,
+    precio_base INT NOT NULL COMMENT 'COP',
+    duracion_estimada INT COMMENT 'Minutos',
+    requisitos TEXT,
+    garantia_meses INT DEFAULT 3,
+    estado ENUM('activo', 'inactivo') DEFAULT 'activo'
+) ENGINE=InnoDB;
+
+-- ======================
+-- TABLA DE ÓRDENES DE SERVICIO
+-- ======================
+CREATE TABLE ordenes_servicio (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    codigo VARCHAR(20) UNIQUE COMMENT 'OS-2024-001',
+    cliente_id INT NOT NULL,
+    servicio_id INT NOT NULL,
+    
+    tecnico_id INT,
+    estado ENUM('pendiente', 'en_proceso', 'completado', 'cancelado') DEFAULT 'pendiente',
+    fecha_inicio DATETIME,
+    fecha_fin DATETIME,
+    diagnostico TEXT,
+    componentes_usados JSON COMMENT 'IDs y cantidades',
+    observaciones TEXT,
+    costo_final INT COMMENT 'COP incluyendo componentes',
+    FOREIGN KEY (cliente_id) REFERENCES usuarios(id),
+    FOREIGN KEY (servicio_id) REFERENCES servicios(id),
+    FOREIGN KEY (tecnico_id) REFERENCES usuarios(id),
+    INDEX idx_estado (estado),
+    INDEX idx_fecha (fecha_inicio)
+) ENGINE=InnoDB;
+
+-- ======================
+-- TABLA DE INVENTARIO (MOVIMIENTOS)
+-- ======================
+CREATE TABLE movimientos_inventario (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    componente_id INT NOT NULL,
+    tipo ENUM('entrada', 'salida', 'ajuste', 'devolucion') NOT NULL,
+    cantidad INT NOT NULL,
+    responsable_id INT NOT NULL,
+    orden_servicio_id INT NULL,
+    referencia VARCHAR(50) COMMENT 'Factura/Remisión',
+    motivo VARCHAR(200) NOT NULL,
+    fecha TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (componente_id) REFERENCES componentes(id),
+    FOREIGN KEY (responsable_id) REFERENCES usuarios(id),
+    FOREIGN KEY (orden_servicio_id) REFERENCES ordenes_servicio(id),
+    INDEX idx_fecha (fecha),
+    INDEX idx_tipo (tipo)
+) ENGINE=InnoDB;
+
+-- ======================
+-- TABLA DE COTIZACIONES
+-- ======================
+CREATE TABLE cotizaciones (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    codigo VARCHAR(20) UNIQUE COMMENT 'COT-2024-001',
+    cliente_id INT NOT NULL,
+    componentes JSON NOT NULL COMMENT 'IDs, cantidades y precios',
+    servicios JSON COMMENT 'IDs de servicios',
+    total INT NOT NULL COMMENT 'COP',
+    estado ENUM('pendiente', 'aprobada', 'rechazada') DEFAULT 'pendiente',
+    validez_dias INT DEFAULT 7,
+    notas TEXT,
+    fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (cliente_id) REFERENCES usuarios(id)
+) ENGINE=InnoDB;
+
+-- ======================
+-- TABLA DE FACTURACIÓN
+-- ======================
+CREATE TABLE facturas (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    numero_factura VARCHAR(20) UNIQUE COMMENT 'FAC-2024-001',
+    cliente_id INT NOT NULL,
+    orden_servicio_id INT NULL,
+    cotizacion_id INT NULL,
+    subtotal INT NOT NULL,
+    iva INT NOT NULL COMMENT 'Valor en COP',
+    total INT NOT NULL,
+    metodo_pago ENUM('efectivo', 'transferencia', 'tarjeta') NOT NULL,
+    fecha_emision TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (cliente_id) REFERENCES usuarios(id),
+    FOREIGN KEY (orden_servicio_id) REFERENCES ordenes_servicio(id),
+    FOREIGN KEY (cotizacion_id) REFERENCES cotizaciones(id)
+) ENGINE=InnoDB;
+
+-- ======================
+-- DATOS INICIALES (USUARIOS EJEMPLO)
+-- ======================
+
+-- Contraseña para todos: "McProinv123" (hasheada)
+INSERT INTO usuarios (documento, nombre, email, password, rol, especialidad, telefono, direccion) VALUES
+-- Administrador
+('123456789', 'Admin Principal', 'admin@mcproinv.com', '$2b$12$EixZaYVK1fsbw1ZfbX3OXePaWxn96p36WQoeG6Lruj3vjPGga31lW', 'admin', NULL, '3001234567', 'Sede Principal, Bogotá'),
+
+-- Proveedores
+('900123456', 'TecnoParts Colombia', 'proveedor@tecnoparts.co', '$2b$12$EixZaYVK1fsbw1ZfbX3OXePaWxn96p36WQoeG6Lruj3vjPGga31lW', 'proveedor', 'Componentes Gaming', '6012345678', 'Carrera 68 #80-77, Bogotá'),
+('890123456', 'ElectroComponentes SAS', 'ventas@electrocomp.com', '$2b$12$EixZaYVK1fsbw1ZfbX3OXePaWxn96p36WQoeG6Lruj3vjPGga31lW', 'proveedor', 'Refrigeración', '6054321890', 'Calle 12 #34-56, Medellín'),
+
+-- Técnicos
+('987654321', 'Carlos Rojas', 'tecnico1@mcproinv.com', '$2b$12$EixZaYVK1fsbw1ZfbX3OXePaWxn96p36WQoeG6Lruj3vjPGga31lW', 'tecnico', 'Ensamblaje PC', '3209876543', 'Carrera 15 #88-64, Bogotá'),
+('876543219', 'Ana Gómez', 'tecnico2@mcproinv.com', '$2b$12$EixZaYVK1fsbw1ZfbX3OXePaWxn96p36WQoeG6Lruj3vjPGga31lW', 'tecnico', 'Reparación Hardware', '3108765432', 'Calle 72 #10-15, Cali'),
+
+-- Personal interno
+('456789123', 'Laura Martínez', 'inventario@mcproinv.com', '$2b$12$EixZaYVK1fsbw1ZfbX3OXePaWxn96p36WQoeG6Lruj3vjPGga31lW', 'inventario', 'Gestión Stock', '3154567890', 'Av. 6N #23-45, Cali'),
+('567891234', 'David Ramírez', 'contabilidad@mcproinv.com', '$2b$12$EixZaYVK1fsbw1ZfbX3OXePaWxn96p36WQoeG6Lruj3vjPGga31lW', 'contabilidad', 'Finanzas', '3185678912', 'Calle 53 #12-34, Medellín'),
+
+-- Clientes
+('112233445', 'Andrés López', 'cliente1@example.com', '$2b$12$EixZaYVK1fsbw1ZfbX3OXePaWxn96p36WQoeG6Lruj3vjPGga31lW', 'cliente', NULL, '3001122334', 'Carrera 7 #45-89, Bogotá'),
+('223344556', 'Empresa Tech Solutions', 'compras@techsolutions.co', '$2b$12$EixZaYVK1fsbw1ZfbX3OXePaWxn96p36WQoeG6Lruj3vjPGga31lW', 'cliente', NULL, '6012233445', 'Av. El Dorado #68-35, Bogotá');
+
+-- ======================
+-- CATEGORÍAS DE COMPONENTES
+-- ======================
+INSERT INTO categorias_componentes (nombre, descripcion, icono, nivel_prioridad) VALUES
+('Procesadores', 'El cerebro del sistema: potencia y velocidad para cada necesidad, desde gaming hasta servidores.', 'fa-microchip', 1),
+('Tarjetas Gráficas', 'Desata el poder visual con GPUs para juegos ultra realistas y creación de contenido profesional.', 'fa-gamepad', 2),
+('Almacenamiento', 'Espacio y velocidad para tus archivos: SSDs ultrarrápidos y HDDs confiables.', 'fa-hdd', 3),
+('Memoria RAM', 'Agiliza tu sistema con módulos DDR4 y DDR5 de alto rendimiento para multitarea sin límites.', 'fa-memory', 4),
+('Placas Madre', 'La base de todo gran PC: motherboards con soporte para lo último en tecnología.', 'fa-circuit-board', 5),
+('Fuentes de Poder', 'Energía estable y segura: PSUs certificadas para proteger tu hardware con eficiencia.', 'fa-plug', 6),
+('Refrigeración', 'Mantén la temperatura bajo control con sistemas de enfriamiento por aire o líquido de alto nivel.', 'fa-fan', 7),
+('Gabinetes', 'Diseño, flujo de aire y estilo: cases que combinan funcionalidad con estética.', 'fa-box', 8);
+
+
+-- ======================
+-- COMPONENTES DE EJEMPLO
+-- ======================
+INSERT INTO componentes (sku, nombre, descripcion, precio, costo, stock, stock_minimo, categoria_id, proveedor_id, especificaciones) VALUES
+('MC-CPU-001', 'AMD Ryzen 7 5800X', 'Desata el poder de 8 núcleos y 16 hilos para un rendimiento extremo en gaming, creación y multitarea.', 1200000, 850000, 15, 3, 1, 2, 
+  '{"nucleos":8,"hilos":16,"socket":"AM4","frecuencia_base":"3.8GHz","frecuencia_max":"4.7GHz","tdp":"105W"}'),
+
+('MC-GPU-001', 'NVIDIA RTX 4070 Ti', 'Eleva tu experiencia visual a otro nivel con 12GB GDDR6X y ray tracing de última generación.', 4500000, 3800000, 8, 2, 2, 2,
+  '{"vram":"12GB","tipo_memoria":"GDDR6X","interfaz":"PCIe 4.0","consumo":"285W","conectores":["3x DP 1.4a","1x HDMI 2.1"]}'),
+
+('MC-SSD-001', 'Samsung 990 Pro 2TB', 'Arranque y carga ultra rápida con tecnología PCIe 4.0. ¡Velocidad que revoluciona tu sistema!', 1200000, 950000, 20, 5, 3, 2,
+  '{"capacidad":"2TB","velocidad_lectura":"7450MB/s","velocidad_escritura":"6900MB/s","interfaz":"PCIe 4.0 x4","durabilidad":"1200TBW"}'),
+
+('MC-RAM-001', 'Corsair Dominator 32GB', 'Diseñada para alto rendimiento, esta DDR5 de 5600MHz te lleva más allá en juegos y productividad.', 850000, 650000, 25, 5, 4, 2,
+  '{"capacidad":"32GB","tipo":"DDR5","velocidad":"5600MHz","latencia":"CL36","voltaje":"1.25V"}'),
+
+('MC-MB-001', 'ASUS ROG Crosshair X670E', 'Placa madre de élite para procesadores AM5: potencia, conectividad y estilo en un solo lugar.', 2500000, 2000000, 10, 2, 5, 2,
+  '{"socket":"AM5","chipset":"X670E","form_factor":"ATX","ram_slots":4,"conectores":["USB4","Thunderbolt 4"]}');
+
+
+-- ======================
+-- SERVICIOS TÉCNICOS
+-- ======================
+INSERT INTO servicios (codigo, nombre, descripcion, tipo, precio_base, duracion_estimada, garantia_meses) VALUES
+('SV-ENS-001', 'Ensamblaje Básico', 'Ensamblaje de PC con componentes estándar', 'ensamblaje', 150000, 120, 6),
+('SV-ENS-002', 'Ensamblaje Gamer Premium', 'Ensamblaje optimizado con cable management profesional', 'ensamblaje', 300000, 180, 12),
+('SV-REP-001', 'Diagnóstico Hardware', 'Pruebas completas de componentes', 'diagnostico', 50000, 60, 1),
+('SV-REP-002', 'Reparación Placa Madre', 'Reemplazo de componentes SMD', 'reparacion', 250000, 240, 3),
+('SV-SOP-001', 'Soporte Técnico Remoto', 'Asistencia por software/control remoto', 'soporte', 80000, 60, 1);
+
+-- ======================
+-- ÓRDENES DE SERVICIO EJEMPLO
+-- ======================
+INSERT INTO ordenes_servicio (codigo, cliente_id, servicio_id, tecnico_id, estado, fecha_inicio, componentes_usados, costo_final) VALUES
+('OS-2024-001', 7, 2, 3, 'completado', '2024-01-15 10:00:00', 
+  '[{"id":1,"cantidad":1,"precio":1200000},{"id":2,"cantidad":1,"precio":4500000},{"id":4,"cantidad":1,"precio":850000}]', 
+  6850000),
+
+('OS-2024-002', 8, 1, 4, 'en_proceso', '2024-02-20 14:30:00', 
+  '[{"id":3,"cantidad":2,"precio":1200000},{"id":5,"cantidad":1,"precio":2500000}]', 
+  4900000);
+
+-- ======================
+-- MOVIMIENTOS DE INVENTARIO
+-- ======================
+INSERT INTO movimientos_inventario (componente_id, tipo, cantidad, responsable_id, orden_servicio_id, referencia, motivo) VALUES
+(1, 'salida', 1, 6, 1, 'OS-2024-001', 'Ensamblaje PC cliente #112233445'),
+(2, 'salida', 1, 6, 1, 'OS-2024-001', 'Ensamblaje PC cliente #112233445'),
+(4, 'salida', 1, 6, 1, 'OS-2024-001', 'Ensamblaje PC cliente #112233445'),
+(3, 'salida', 2, 6, 2, 'OS-2024-002', 'Ensamblaje corporativo Tech Solutions'),
+(5, 'salida', 1, 6, 2, 'OS-2024-002', 'Ensamblaje corporativo Tech Solutions'),
+(1, 'entrada', 10, 5, NULL, 'FAC-001-2024', 'Compra a TecnoParts Colombia');
+
+-- ======================
+-- COTIZACIONES EJEMPLO
+-- ======================
+INSERT INTO cotizaciones (codigo, cliente_id, componentes, servicios, total, estado) VALUES
+('COT-2024-001', 7, 
+  '[{"id":2,"cantidad":1,"precio":4500000},{"id":3,"cantidad":1,"precio":1200000},{"id":5,"cantidad":1,"precio":2500000}]', 
+  '[{"id":2,"cantidad":1,"precio":300000}]', 
+  8500000, 'aprobada'),
+
+('COT-2024-002', 8, 
+  '[{"id":1,"cantidad":5,"precio":1200000},{"id":4,"cantidad":5,"precio":850000}]', 
+  '[{"id":1,"cantidad":5,"precio":150000}]', 
+  10750000, 'pendiente');
+
+-- ======================
+-- FACTURAS EJEMPLO
+-- ======================
+INSERT INTO facturas (numero_factura, cliente_id, orden_servicio_id, subtotal, iva, total, metodo_pago) VALUES
+('FAC-2024-001', 7, 1, 6850000, 1301500, 8151500, 'transferencia'),
+('FAC-2024-002', 8, 2, 4900000, 931000, 5831000, 'tarjeta');
+
+-- Componentes con stock bajo
+SELECT c.sku, c.nombre, c.stock, cat.nombre AS categoria 
+FROM componentes c
+JOIN categorias_componentes cat ON c.categoria_id = cat.id
+WHERE c.stock < c.stock_minimo;
+
+-- Órdenes en proceso con técnico asignado
+SELECT os.codigo, s.nombre AS servicio, 
+       u.nombre AS cliente, t.nombre AS tecnico
+FROM ordenes_servicio os
+JOIN servicios s ON os.servicio_id = s.id
+JOIN usuarios u ON os.cliente_id = u.id
+JOIN usuarios t ON os.tecnico_id = t.id
+WHERE os.estado = 'en_proceso';
+
+-- Ventas por categoría (últimos 30 días)
+SELECT cat.nombre AS categoria, SUM(f.total) AS ventas
+FROM facturas f
+JOIN ordenes_servicio os ON f.orden_servicio_id = os.id
+JOIN JSON_TABLE(os.componentes_usados, '$[*]' COLUMNS(
+  id INT PATH '$.id',
+  cantidad INT PATH '$.cantidad'
+)) AS comp
+JOIN componentes c ON comp.id = c.id
+JOIN categorias_componentes cat ON c.categoria_id = cat.id
+WHERE f.fecha_emision >= DATE_SUB(NOW(), INTERVAL 30 DAY)
+GROUP BY cat.nombre;

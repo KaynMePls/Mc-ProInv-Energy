@@ -1,0 +1,421 @@
+{% extends "base.html" %} {% block content %}
+<style>
+    body {
+        background: linear-gradient(120deg, #e0e7ff 0%, #fff 100%);
+    }
+    
+    .dashboard-card {
+        border-radius: 20px;
+        box-shadow: 0 6px 32px rgba(25, 118, 210, 0.10);
+        border: none;
+        transition: transform 0.18s, box-shadow 0.18s;
+        background: linear-gradient(135deg, #f8fafc 0%, #e3f2fd 100%);
+    }
+    
+    .dashboard-card:hover {
+        transform: translateY(-6px) scale(1.03);
+        box-shadow: 0 12px 36px rgba(25, 118, 210, 0.18);
+    }
+    
+    .dashboard-badge {
+        font-size: 1.1em;
+        padding: 7px 20px;
+        border-radius: 18px;
+        font-weight: 700;
+        background: linear-gradient(90deg, #1976d2 60%, #64b5f6 100%);
+        color: #fff;
+        letter-spacing: 0.5px;
+        box-shadow: 0 2px 8px rgba(25, 118, 210, 0.10);
+        margin-bottom: 10px;
+        display: inline-block;
+        animation: badgePop 0.7s;
+    }
+    
+    @keyframes badgePop {
+        0% {
+            transform: scale(0.7);
+        }
+        80% {
+            transform: scale(1.1);
+        }
+        100% {
+            transform: scale(1);
+        }
+    }
+    
+    .dashboard-btn {
+        font-size: 1.1em;
+        padding: 14px 36px;
+        border-radius: 32px;
+        font-weight: 700;
+        box-shadow: 0 2px 12px rgba(25, 118, 210, 0.10);
+        transition: background 0.2s, color 0.2s, transform 0.15s;
+        border: none;
+    }
+    
+    .dashboard-btn:hover {
+        opacity: 0.95;
+        color: #fff !important;
+        transform: scale(1.06);
+        box-shadow: 0 6px 24px rgba(25, 118, 210, 0.18);
+    }
+    
+    #ofertasCarousel .carousel-item img {
+        max-height: 320px;
+        width: 100%;
+        object-fit: cover;
+        border-radius: 18px;
+        filter: brightness(0.85);
+        transition: filter 0.3s;
+    }
+    
+    #ofertasCarousel .carousel-item img:hover {
+        filter: brightness(1);
+    }
+    
+    .carousel-caption {
+        background: rgba(25, 118, 210, 0.75);
+        border-radius: 14px;
+        padding: 1.2rem 2rem;
+        box-shadow: 0 2px 12px rgba(25, 118, 210, 0.10);
+        animation: fadeInUp 0.7s;
+    }
+    
+    @keyframes fadeInUp {
+        0% {
+            opacity: 0;
+            transform: translateY(30px);
+        }
+        100% {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    
+    .dashboard-section-title {
+        font-family: 'Montserrat', Arial, sans-serif;
+        font-weight: 800;
+        font-size: 2em;
+        color: #1976d2;
+        margin-bottom: 22px;
+        letter-spacing: 1.5px;
+        text-shadow: 0 2px 8px #e3f2fd;
+    }
+    
+    .dashboard-profile {
+        background: linear-gradient(135deg, #e3f2fd 0%, #fff 100%);
+        border-radius: 20px;
+        box-shadow: 0 2px 12px rgba(25, 118, 210, 0.10);
+        border: none;
+    }
+    
+    .dashboard-support {
+        background: linear-gradient(135deg, #f8fafc 0%, #e3f2fd 100%);
+        border-radius: 20px;
+        box-shadow: 0 2px 12px rgba(25, 118, 210, 0.08);
+        border: none;
+    }
+    
+    .dashboard-quicklinks a {
+        min-width: 180px;
+        margin-bottom: 10px;
+    }
+    
+    .dashboard-quicklinks .btn {
+        font-size: 1.1em;
+        padding: 14px 28px;
+        border-radius: 32px;
+        font-weight: 700;
+        border: none;
+        transition: background 0.2s, color 0.2s, transform 0.15s;
+    }
+    
+    .dashboard-quicklinks .btn:hover {
+        transform: scale(1.07);
+        opacity: 0.97;
+    }
+    
+    .dashboard-history .card-title {
+        font-size: 1.15em;
+        font-weight: 800;
+        color: #1976d2;
+        letter-spacing: 1px;
+    }
+    
+    .dashboard-history .list-group-item {
+        border: none;
+        border-bottom: 1px solid #e3f2fd;
+        background: transparent;
+    }
+    
+    .dashboard-history .list-group-item:last-child {
+        border-bottom: none;
+    }
+    
+    .dashboard-history .btn {
+        border-radius: 18px;
+        font-weight: 600;
+    }
+    
+    .dashboard-card .card-title {
+        font-weight: 800;
+        color: #1976d2;
+    }
+</style>
+<div class="container mt-5">
+
+    <!-- Tarjetas resumen y accesos rápidos -->
+    <div class="row mb-4">
+        <div class="col-md-9">
+            <div class="row g-3">
+                <div class="col-md-3">
+                    <div class="card dashboard-card text-center h-100">
+                        <div class="card-body">
+                            <div class="dashboard-badge">💸</div>
+                            <div class="fw-bold mt-2">Total gastado</div>
+                            <div class="fs-5 text-success">${{ resumen.total_gastado|miles }}</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card dashboard-card text-center h-100">
+                        <div class="card-body">
+                            <div class="dashboard-badge">📄</div>
+                            <div class="fw-bold mt-2">Cotizaciones</div>
+                            <div class="fs-5">{{ resumen.total_cotizaciones }}</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card dashboard-card text-center h-100">
+                        <div class="card-body">
+                            <div class="dashboard-badge">🧾</div>
+                            <div class="fw-bold mt-2">Compras</div>
+                            <div class="fs-5">{{ resumen.total_compras }}</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card dashboard-card text-center h-100">
+                        <div class="card-body">
+                            <div class="dashboard-badge">🛠️</div>
+                            <div class="fw-bold mt-2">Servicios activos</div>
+                            <div class="fs-5">{{ resumen.servicios_activos }}</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- Accesos rápidos -->
+            <div class="d-flex flex-wrap gap-3 justify-content-center my-4 dashboard-quicklinks">
+                <a href="{{ url_for('cliente.ver_carrito') }}" class="btn btn-success dashboard-btn shadow">🛒 Ver carrito</a>
+                <a href="{{ url_for('cliente.cotizaciones') }}" class="btn btn-warning dashboard-btn shadow">📄 Mis Cotizaciones</a>
+                <a href="{{ url_for('cliente.historial_compras') }}" class="btn btn-info dashboard-btn shadow">🧾 Historial de compras</a>
+            </div>
+        </div>
+        <!-- Perfil y soporte -->
+        <div class="col-md-3">
+            <div class="card dashboard-profile mb-3">
+                <div class="card-body text-center">
+                    <div style="font-size:2.2em;">👤</div>
+                    <div class="fw-bold mt-2">{{ session['user_nombre'] }}</div>
+                    <div class="text-muted">{{ session['user_email'] }}</div>
+                    <a href="{{ url_for('auth.logout') }}" class="btn btn-outline-danger btn-sm mt-2">Cerrar sesión</a>
+                </div>
+            </div>
+            <div class="card dashboard-support">
+                <div class="card-body text-center">
+                    <div style="font-size:1.7em;">💬</div>
+                    <div class="fw-bold mt-2">¿Necesitas ayuda?</div>
+                    <a href="https://wa.me/573232378407" target="_blank" class="btn btn-success btn-sm mt-2">WhatsApp</a>
+                    <a href="https://mail.google.com/mail/?view=cm&fs=1&to=andrewcipal@gmail.com" target="_blank" class="btn btn-outline-secondary btn-sm mt-2">Email</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Ofertas o productos destacados -->
+    <div class="mb-5">
+        <h4 class="dashboard-section-title">Ofertas y destacados</h4>
+        <div id="ofertasCarousel" class="carousel slide" data-bs-ride="carousel">
+            <div class="carousel-inner">
+                {% for oferta in ofertas %}
+                <div class="carousel-item {% if loop.first %}active{% endif %}">
+                    <img src="{{ oferta.imagen_url or url_for('static', filename='ofertas/default.jpg') }}" class="d-block w-100" alt="Oferta">
+                    <div class="carousel-caption d-none d-md-block">
+                        <h5 class="mb-1" style="font-weight:800;">{{ oferta.titulo }}</h5>
+                        <p class="mb-0">{{ oferta.descripcion }}</p>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            <button class="carousel-control-prev" type="button" data-bs-target="#ofertasCarousel" data-bs-slide="prev">
+                <span class="carousel-control-prev-icon"></span>
+            </button>
+            <button class="carousel-control-next" type="button" data-bs-target="#ofertasCarousel" data-bs-slide="next">
+                <span class="carousel-control-next-icon"></span>
+            </button>
+        </div>
+    </div>
+
+    <!-- Estado de pedidos/servicios y valoraciones -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            {% if estados_pedidos %}
+            <div class="alert alert-info mb-4" style="border-radius:16px;">
+                <strong>Estado de tus pedidos/servicios:</strong>
+                <ul class="mb-0">
+                    {% for estado in estados_pedidos %}
+                    <li>{{ estado.descripcion }} <span class="badge bg-primary">{{ estado.estado }}</span></li>
+                    {% endfor %}
+                </ul>
+            </div>
+            {% endif %}
+        </div>
+        <div class="col-md-6">
+            {% if valoraciones %}
+            <div class="card dashboard-card mb-4">
+                <div class="card-body">
+                    <h5 class="card-title mb-3">⭐ Tus últimas valoraciones</h5>
+                    <ul class="list-group list-group-flush">
+                        {% for val in valoraciones %}
+                        <li class="list-group-item">
+                            <strong>{{ val.producto_nombre }}</strong>:
+                            <span class="text-warning">{% for i in range(val.puntaje) %}★{% endfor %}</span>
+                            <span class="text-muted">"{{ val.comentario }}"</span>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Historial rápido -->
+    <div class="row mb-5 dashboard-history">
+        <div class="col-md-6">
+            <div class="card dashboard-card h-100">
+                <div class="card-body">
+                    <h5 class="card-title mb-3">🧾 Últimas compras</h5>
+                    {% if ultimas_compras %}
+                    <ul class="list-group list-group-flush">
+                        {% for compra in ultimas_compras %}
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            <span>
+                                <strong>#{{ compra.numero_factura }}</strong> - {{ compra.fecha_emision.strftime('%d/%m/%Y') }}
+                            </span>
+                            <span class="fw-bold text-success">${{ compra.total|miles }}</span>
+                            <a href="{{ url_for('cliente.ver_factura', id=compra.id) }}" class="btn btn-sm btn-outline-primary ms-2">Ver</a>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                    {% else %}
+                    <p class="text-muted mb-0">No hay compras recientes.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card dashboard-card h-100">
+                <div class="card-body">
+                    <h5 class="card-title mb-3">📄 Últimas cotizaciones</h5>
+                    {% if ultimas_cotizaciones %}
+                    <ul class="list-group list-group-flush">
+                        {% for cot in ultimas_cotizaciones %}
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            <span>
+                                <strong>#{{ cot.codigo }}</strong> - {{ cot.fecha_creacion.strftime('%d/%m/%Y') }}
+                            </span>
+                            <span class="fw-bold">${{ cot.total|miles }}</span>
+                            <a href="{{ url_for('cliente.ver_cotizacion', id=cot.id) }}" class="btn btn-sm btn-outline-warning ms-2">Ver</a>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                    {% else %}
+                    <p class="text-muted mb-0">No hay cotizaciones recientes.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Marketplace -->
+    <h2 class="dashboard-section-title">Marketplace</h2>
+    <ul class="nav nav-tabs" id="marketplaceTabs" role="tablist">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link active" id="productos-tab" data-bs-toggle="tab" data-bs-target="#productos" type="button" role="tab">Productos</button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="servicios-tab" data-bs-toggle="tab" data-bs-target="#servicios" type="button" role="tab">Servicios</button>
+        </li>
+    </ul>
+    <div class="tab-content mt-4" id="marketplaceTabsContent">
+        <!-- Productos -->
+        <div class="tab-pane fade show active" id="productos" role="tabpanel">
+            <div class="row">
+                {% if productos %} {% for producto in productos %}
+                <div class="col-md-4 mb-4">
+                    <div class="card h-100 dashboard-card">
+                        {% if producto.imagen_url %} {% if producto.imagen_url.startswith('http') %}
+                        <img src="{{ producto.imagen_url }}" class="card-img-top" alt="{{ producto.nombre }}" style="height:200px; object-fit:contain;"> {% else %}
+                        <img src="{{ url_for('static', filename='img_productos/' ~ producto.imagen_url) }}" class="card-img-top" alt="{{ producto.nombre }}" style="height:200px; object-fit:contain;"> {% endif %} {% else %}
+                        <div class="card-img-top d-flex align-items-center justify-content-center" style="height:200px;background:#f0f0f0;">
+                            <i class="bi bi-image text-muted" style="font-size:2.5em;"></i>
+                        </div>
+                        {% endif %}
+                        <div class="card-body d-flex flex-column">
+                            <h5 class="card-title">{{ producto.nombre }}</h5>
+                            <p class="card-text">{{ producto.descripcion }}</p>
+                            <p class="card-text fw-bold">${{ producto.precio|miles }}</p>
+                            <form method="POST" action="{{ url_for('cliente.agregar_carrito') }}" class="mt-auto">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                <input type="hidden" name="producto_id" value="{{ producto.id }}">
+                                <button class="btn btn-primary w-100" type="submit">Agregar al carrito</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %} {% else %}
+                <p class="text-muted">No hay productos disponibles en este momento.</p>
+                {% endif %}
+            </div>
+            {% if total_paginas > 1 %}
+            <nav aria-label="Paginación productos" class="mt-4">
+                <ul class="pagination justify-content-center">
+                    {% for num in range(1, total_paginas + 1) %}
+                    <li class="page-item {% if num == pagina_actual %}active{% endif %}">
+                        <a class="page-link" href="{{ url_for('cliente.dashboard', page=num) }}">
+                            {{ num }}
+                        </a>
+                    </li>
+                    {% endfor %}
+                </ul>
+            </nav>
+            {% endif %}
+        </div>
+        <!-- Servicios -->
+        <div class="tab-pane fade" id="servicios" role="tabpanel">
+            <div class="row">
+                {% if servicios %} {% for servicio in servicios %}
+                <div class="col-md-4 mb-4">
+                    <div class="card h-100 dashboard-card">
+                        <div class="card-body">
+                            <h5 class="card-title">{{ servicio.nombre }}</h5>
+                            <p class="card-text">{{ servicio.descripcion }}</p>
+                            <p class="card-text fw-bold">${{ servicio.precio_base|miles }}</p>
+                            <form method="POST" action="{{ url_for('cliente.agregar_servicio_carrito') }}">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                <input type="hidden" name="servicio_id" value="{{ servicio.id }}">
+                                <button class="btn btn-success" type="submit">Solicitar servicio</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %} {% else %}
+                <p class="text-muted">No hay servicios disponibles en este momento.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

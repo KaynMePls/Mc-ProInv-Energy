@@ -1,0 +1,95 @@
+{% extends "base.html" %} {% block content %}
+<style>
+    .cotizacion-card {
+        border-radius: 18px;
+        box-shadow: 0 4px 18px rgba(25, 118, 210, 0.10);
+        background: linear-gradient(120deg, #e3f2fd 0%, #fff 100%);
+        transition: transform 0.18s, box-shadow 0.18s;
+        margin-bottom: 18px;
+        border: none;
+        animation: fadeInUp 0.7s;
+    }
+    
+    .cotizacion-card:hover {
+        transform: scale(1.03) translateY(-4px);
+        box-shadow: 0 8px 32px rgba(25, 118, 210, 0.18);
+    }
+    
+    @keyframes fadeInUp {
+        0% {
+            opacity: 0;
+            transform: translateY(30px);
+        }
+        100% {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    
+    .cotizacion-badge {
+        font-size: 0.95em;
+        padding: 6px 16px;
+        border-radius: 14px;
+        font-weight: 700;
+        background: linear-gradient(90deg, #1976d2 60%, #64b5f6 100%);
+        color: #fff;
+        letter-spacing: 0.5px;
+        box-shadow: 0 2px 8px rgba(25, 118, 210, 0.10);
+        margin-bottom: 8px;
+        display: inline-block;
+    }
+    
+    .cotizacion-total {
+        font-size: 1.2em;
+        font-weight: 700;
+        color: #1976d2;
+        text-shadow: 0 2px 8px #e3f2fd;
+    }
+    
+    .cotizacion-btn {
+        border-radius: 16px;
+        font-weight: 700;
+        padding: 7px 18px;
+        transition: background 0.18s, color 0.18s, transform 0.15s;
+    }
+    
+    .cotizacion-btn:hover {
+        background: #1976d2;
+        color: #fff;
+        transform: scale(1.07);
+    }
+</style>
+<div class="container mt-5">
+    <h2 class="mb-4" style="font-weight:800; color:#1976d2; letter-spacing:1px;">
+        📄 Mis Cotizaciones
+    </h2>
+
+    {% if cotizaciones %}
+    <div>
+        {% for c in cotizaciones %}
+        <div class="cotizacion-card p-4">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <div class="cotizacion-badge">Cotización #{{ c.id }}</div>
+                    <p class="mb-1 text-muted">Fecha: {{ c.fecha_creacion.strftime('%Y-%m-%d %H:%M') }}</p>
+                    <span class="badge {% if c.estado == 'Aprobada' %}bg-success{% elif c.estado == 'Pendiente' %}bg-warning text-dark{% else %}bg-secondary{% endif %} px-3 py-2">
+                        {{ c.estado }}
+                    </span>
+                </div>
+                <div class="text-end">
+                    <div class="cotizacion-total mb-2">${{ c.total|miles }}</div>
+                    <a href="{{ url_for('cliente.ver_cotizacion', id=c.id) }}" class="btn btn-outline-primary cotizacion-btn">Ver detalle</a>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="alert alert-info mt-4" style="border-radius:16px;">
+        <span style="font-size:1.3em;">🎉</span> ¡No has generado cotizaciones aún!
+    </div>
+    {% endif %}
+
+    <a href="{{ url_for('cliente.dashboard') }}" class="btn btn-secondary mt-4" style="border-radius:8px;">Regresar al Inicio</a>
+</div>
+{% endblock %}
