@@ -2,11 +2,11 @@
 <div class="container mt-5">
     <h3 class="fw-bold mb-4 text-primary"><i class="bi bi-shop-window me-2"></i>Marketplace de Proveedores</h3>
     <div class="mb-4">
-        <a href="{{ url_for('contabilidad.dashboard') }}" class="btn btn-outline-secondary rounded-pill fw-semibold">
+        <a href="{{ cancel_url }}" class="btn btn-outline-secondary rounded-pill fw-semibold">
             <i class="bi bi-arrow-left-circle me-1"></i>Regresar al Dashboard
         </a>
     </div>
-    {% for proveedor, productos in proveedores_productos.items() %}
+    {% for proveedor_id, productos in proveedores_productos.items() %} {% set proveedor = usuarios_dict[proveedor_id] %}
     <div class="card mb-4 shadow-sm border-0 rounded-4">
         <div class="card-header bg-info text-dark rounded-top-4 fw-bold">
             <i class="bi bi-person-badge me-2"></i>{{ proveedor.nombre }}
@@ -16,8 +16,9 @@
                 {% for producto in productos %}
                 <div class="col-md-4 mb-3">
                     <div class="card h-100 border-0 shadow-sm rounded-4">
-                        {% if producto.imagen_url %}
+                        {% if producto.imagen_url %} {% if producto.imagen_url.startswith('http') %}
                         <img src="{{ producto.imagen_url }}" alt="{{ producto.nombre }}" class="card-img-top rounded-top-4" style="height:180px; object-fit:cover;"> {% else %}
+                        <img src="{{ url_for('static', filename='Img_productos/' ~ producto.imagen_url) }}" alt="{{ producto.nombre }}" class="card-img-top rounded-top-4" style="height:180px; object-fit:cover;"> {% endif %} {% else %}
                         <img src="{{ url_for('static', filename='default-product.png') }}" alt="Sin imagen" class="card-img-top rounded-top-4" style="height:180px; object-fit:cover;"> {% endif %}
                         <div class="card-body">
                             <h5 class="fw-bold">{{ producto.nombre }}</h5>
@@ -35,8 +36,8 @@
                                     <input type="number" name="cantidad" min="1" class="form-control rounded-pill" required>
                                 </div>
                                 <button type="submit" class="btn btn-success rounded-pill w-100">
-                                    <i class="bi bi-cart-plus me-1"></i>Comprar
-                                </button>
+                                        <i class="bi bi-cart-plus me-1"></i>Comprar
+                                    </button>
                             </form>
                         </div>
                     </div>

@@ -1,0 +1,109 @@
+{% extends "base.html" %} {% block content %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+<style>
+    body {
+        background: #18181b;
+        color: #fff;
+    }
+    
+    .editar-title {
+        color: #ff0033;
+        letter-spacing: 1px;
+        font-weight: bold;
+        text-shadow: 1px 1px 8px #000;
+    }
+    
+    .card {
+        background: #232326;
+        border: none;
+        color: #fff;
+    }
+    
+    .card-header {
+        background: #1a1a1d !important;
+        color: #ff0033 !important;
+        border-bottom: 1px solid #ff0033;
+    }
+    
+    .form-label {
+        color: #ff0033;
+        font-weight: 500;
+    }
+    
+    .form-control,
+    .form-select {
+        background: #232326;
+        color: #fff;
+        border: 1px solid #ff0033;
+    }
+    
+    .form-control:focus,
+    .form-select:focus {
+        border-color: #ff0033;
+        box-shadow: 0 0 0 0.2rem rgba(255, 0, 51, 0.15);
+        background: #18181b;
+        color: #fff;
+    }
+    
+    .btn-success,
+    .btn-secondary {
+        border-color: #ff0033 !important;
+        color: #ff0033 !important;
+        background: #232326 !important;
+        font-weight: bold;
+        transition: background 0.2s, color 0.2s;
+    }
+    
+    .btn-success:hover,
+    .btn-secondary:hover {
+        background: #ff0033 !important;
+        color: #fff !important;
+    }
+</style>
+<div class="container mt-5">
+    <div class="card shadow-sm">
+        <div class="card-header">
+            <h4 class="mb-0 editar-title"><i class="bi bi-pencil-square"></i> Editar Orden</h4>
+        </div>
+        <form method="post">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label for="proveedor" class="form-label">Proveedor</label>
+                        <input type="text" class="form-control" id="proveedor" name="proveedor" value="{{ obj.proveedor.nombre if obj.proveedor else '' }}" readonly>
+                    </div>
+                    <div class="col-md-6">
+                        <label for="producto" class="form-label">Producto</label>
+                        <input type="text" class="form-control" id="producto" name="producto" value="{{ obj.producto or '' }}" readonly>
+                    </div>
+                    <div class="col-md-4">
+                        <label for="cantidad" class="form-label">Cantidad</label>
+                        <input type="number" class="form-control" id="cantidad" name="cantidad" value="{{ obj.cantidad }}" min="1" required>
+                    </div>
+                    <div class="col-md-4">
+                        <label for="precio_unitario" class="form-label">Precio unitario</label>
+                        <input type="number" class="form-control" id="precio_unitario" name="precio_unitario" value="{{ obj.precio_unitario }}" min="0" step="0.01" required>
+                    </div>
+                    <div class="col-md-4">
+                        <label for="estado" class="form-label">Estado</label>
+                        <select class="form-select" id="estado" name="estado" required>
+                    <option value="pendiente" {% if obj.estado == 'pendiente' %}selected{% endif %}>Pendiente</option>
+                    <option value="aprobada" {% if obj.estado == 'aprobada' %}selected{% endif %}>Aprobada</option>
+                    <option value="rechazada" {% if obj.estado == 'rechazada' %}selected{% endif %}>Rechazada</option>
+                </select>
+                    </div>
+                    <div class="col-12">
+                        <label for="descripcion" class="form-label">Descripción / Notas</label>
+                        <textarea class="form-control" id="descripcion" name="descripcion" rows="2">{{ obj.descripcion or '' }}</textarea>
+                    </div>
+                </div>
+            </div>
+            <div class="card-footer text-end">
+                <button type="submit" class="btn btn-success px-4">Guardar cambios</button>
+                <a href="{{ cancel_url or url_for('admin.ordenes') }}" class="btn btn-secondary ms-2 px-4">Cancelar</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

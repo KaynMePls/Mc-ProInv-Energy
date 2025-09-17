@@ -16,7 +16,7 @@ from docx.shared import Pt
 from decimal import Decimal
 from docx.shared import Pt, RGBColor
 from flask_wtf import FlaskForm
-
+from flask import send_file, request, url_for
 
 
 contabilidad_bp = Blueprint('contabilidad', __name__, url_prefix='/contabilidad')
@@ -128,9 +128,11 @@ def categorias_por_tipo():
 @login_required
 def nueva_transaccion():
     form = TransaccionForm()
+    cancel_url = request.args.get('cancel_url') or url_for('contabilidad.dashboard')
 
-    # Opciones iniciales para categoría (por defecto ingreso)
-    if form.tipo.data == 'ingreso':
+    # Asegura opciones de categoría según el tipo (por defecto 'ingreso')
+    tipo_actual = form.tipo.data or 'ingreso'
+    if tipo_actual == 'ingreso':
         form.categoria.choices = [
             ("Ventas", "Ventas"),
             ("Intereses", "Intereses"),
@@ -160,9 +162,13 @@ def nueva_transaccion():
         db.session.add(transaccion)
         db.session.commit()
         flash('Transacción registrada exitosamente.', 'success')
-        return redirect(url_for('contabilidad.dashboard'))
+        return redirect(cancel_url)
 
-    return render_template('empleado/contabilidad/contabilidad.nueva_transaccion.html', form=form)
+    return render_template(
+        'empleado/contabilidad/contabilidad.nueva_transaccion.html',
+        form=form,
+        cancel_url=cancel_url
+    )
 
 # Ruta para transacciones
 @contabilidad_bp.route('/transacciones')
@@ -367,9 +373,9 @@ def editar_transaccion(transaccion_id):
         return redirect(url_for('contabilidad.transacciones'))
 
     return render_template(
-        'empleado/contabilidad/contabilidad.editar_transaccion.html',
+        'empleado/contabilidad/contabilidad.nueva_transaccion.html',
         form=form,
-        transaccion=transaccion
+        cancel_url=request.args.get('cancel_url') or url_for('contabilidad.dashboard')
     )
 
 # Ruta para eliminar una transacción
@@ -466,12 +472,14 @@ def exportar_word():
 def nueva_compra():
     form = CompraForm()
     proveedores = Usuario.query.filter_by(rol='proveedor').all()
-    # Agrupa productos por proveedor
     proveedores_productos = {
-        proveedor: Producto.query.filter_by(proveedor_id=proveedor.id).all()
-        for proveedor in proveedores
+        p.id: Producto.query.filter_by(proveedor_id=p.id).all()
+        for p in proveedores
     }
+    usuarios_dict = {p.id: p for p in proveedores}
     form.proveedor.choices = [(p.nombre, p.nombre) for p in proveedores]
+
+    cancel_url = request.args.get('cancel_url') or url_for('contabilidad.dashboard')
 
     if form.validate_on_submit():
         compra = Compra(
@@ -485,34 +493,45 @@ def nueva_compra():
         db.session.add(compra)
         db.session.commit()
         flash('Compra registrada exitosamente.', 'success')
-        return redirect(url_for('contabilidad.dashboard'))
+        return redirect(cancel_url)
     return render_template(
-    'empleado/contabilidad/contabilidad.nueva_compra.html',
-    form=form,
-    proveedores_productos=proveedores_productos,
-    Decimal=Decimal  # <-- Agrega esto
-)
+        'empleado/contabilidad/contabilidad.nueva_compra.html',
+        form=form,
+        proveedores_productos=proveedores_productos,
+        usuarios_dict=usuarios_dict,
+        Decimal=Decimal,
+        cancel_url=cancel_url
+    )
 # Ruta para Comprar productos
 @contabilidad_bp.route('/comprar_productos', methods=['GET', 'POST'])
 @login_required
 def comprar_productos():
     proveedores = Usuario.query.filter_by(rol='proveedor').all()
-    proveedores_productos = {p: Producto.query.filter_by(proveedor_id=p.id).all() for p in proveedores}
+    proveedores_productos = {p.id: Producto.query.filter_by(proveedor_id=p.id).all() for p in proveedores}
+    usuarios_dict = {p.id: p for p in proveedores}
     form = CompraForm()
-    return render_template('empleado/contabilidad/contabilidad.nueva_compra.html', proveedores_productos=proveedores_productos, form=form)
-
+    return render_template(
+        'empleado/contabilidad/contabilidad.nueva_compra.html',
+        proveedores_productos=proveedores_productos,
+        usuarios_dict=usuarios_dict,
+        form=form,
+        Decimal=Decimal
+    )
 # Ruta para generar ordenes de compra
+
 @contabilidad_bp.route('/generar_orden_compra/<int:producto_id>', methods=['POST'])
 @login_required
 def generar_orden_compra(producto_id):
     producto = Producto.query.get_or_404(producto_id)
     cantidad = int(request.form.get('cantidad', 1))
     precio_venta = producto.precio * Decimal('0.7')  # Aplica el 30% de descuento
+    proveedor = Usuario.query.get(producto.proveedor_id)  # Busca el usuario proveedor
+
     compra = Compra(
-        proveedor=producto.proveedor.nombre,
-        producto=producto.nombre,
+        proveedor=proveedor,              # Objeto Usuario, NO string
+        producto=producto.nombre,         # Nombre del producto (string)
         cantidad=cantidad,
-        precio_unitario=precio_venta,  # <--- AQUÍ EL CAMBIO
+        precio_unitario=precio_venta,
         fecha=datetime.now(),
         usuario_id=current_user.id
     )
@@ -522,7 +541,6 @@ def generar_orden_compra(producto_id):
     db.session.commit()
     flash('Orden de compra generada y stock actualizado.', 'success')
     return redirect(url_for('contabilidad.nueva_compra'))
-
 # Ruta para ver compras
 @contabilidad_bp.route('/compras')
 @login_required
@@ -538,8 +556,7 @@ def cambiar_estado_compra(compra_id):
     compra = Compra.query.get_or_404(compra_id)
     nuevo_estado = request.form.get('estado')
     if nuevo_estado in ['aprobada', 'rechazada']:
-        # Validación: el precio de compra no puede ser mayor o igual al precio de venta
-        proveedor = Usuario.query.filter_by(nombre=compra.proveedor, rol='proveedor').first()
+        proveedor = compra.proveedor  # Ya es el objeto Usuario
         producto = Producto.query.filter_by(nombre=compra.producto, proveedor_id=proveedor.id if proveedor else None).first()
         if producto and compra.precio_unitario >= producto.precio:
             flash('El precio de compra no puede ser mayor o igual al precio de venta.', 'danger')
@@ -553,7 +570,7 @@ def cambiar_estado_compra(compra_id):
             transaccion = TransaccionContable(
                 tipo='egreso',
                 monto=compra.precio_unitario * compra.cantidad,
-                descripcion=f'Compra aprobada: {compra.producto} a {compra.proveedor}',
+                descripcion=f'Compra aprobada: {compra.producto} a {proveedor.nombre if proveedor else ""}',
                 categoria='compras',
                 usuario_id=compra.usuario_id
             )

@@ -29,7 +29,7 @@
                         <tr>
                             <td>{{ compra.fecha.strftime('%Y-%m-%d') }}</td>
                             <td>
-                                <span class="fw-semibold"><i class="bi bi-person-badge me-1"></i>{{ compra.proveedor }}</span>
+                                <span class="fw-semibold"><i class="bi bi-person-badge me-1"></i>{{ compra.proveedor.nombre if compra.proveedor else '' }}</span>
                             </td>
                             <td>
                                 <span class="fw-semibold"><i class="bi bi-box-seam me-1"></i>{{ compra.producto }}</span>

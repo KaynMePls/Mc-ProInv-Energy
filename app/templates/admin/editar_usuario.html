@@ -1,0 +1,116 @@
+{% extends "base.html" %} {% block content %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+<style>
+    body {
+        background: #18181b;
+        color: #fff;
+    }
+    
+    .editar-usuario-title {
+        color: #ff0033;
+        letter-spacing: 1px;
+        font-weight: bold;
+        text-shadow: 1px 1px 8px #000;
+    }
+    
+    .card {
+        background: #232326;
+        border: none;
+        color: #fff;
+    }
+    
+    .form-label {
+        color: #ff0033;
+        font-weight: 500;
+    }
+    
+    .form-control,
+    .form-select {
+        background: #232326;
+        color: #fff;
+        border: 1px solid #ff0033;
+    }
+    
+    .form-control:focus,
+    .form-select:focus {
+        border-color: #ff0033;
+        box-shadow: 0 0 0 0.2rem rgba(255, 0, 51, 0.15);
+        background: #18181b;
+        color: #fff;
+    }
+    
+    .btn-success,
+    .btn-secondary {
+        border-color: #ff0033 !important;
+        color: #ff0033 !important;
+        background: #232326 !important;
+        font-weight: bold;
+        transition: background 0.2s, color 0.2s;
+    }
+    
+    .btn-success:hover,
+    .btn-secondary:hover {
+        background: #ff0033 !important;
+        color: #fff !important;
+    }
+</style>
+<div class="container mt-5">
+    <div class="card shadow-sm">
+        <div class="card-header">
+            <h2 class="mb-0 editar-usuario-title"><i class="bi bi-person-lines-fill"></i> Editar usuario</h2>
+        </div>
+        <div class="card-body">
+            {% with messages = get_flashed_messages(with_categories=true) %} {% if messages %} {% for category, message in messages %}
+            <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Cerrar"></button>
+            </div>
+            {% endfor %} {% endif %} {% endwith %}
+            <form method="post" autocomplete="off">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <div class="mb-3">
+                    <label for="nombre" class="form-label">Nombre</label>
+                    <input type="text" class="form-control" id="nombre" name="nombre" value="{{ usuario.nombre }}" required>
+                </div>
+                <div class="mb-3">
+                    <label for="email" class="form-label">Correo electrónico</label>
+                    <input type="email" class="form-control" id="email" name="email" value="{{ usuario.email }}" required>
+                </div>
+                <div class="mb-3">
+                    <label for="telefono" class="form-label">Teléfono</label>
+                    <input type="text" class="form-control" id="telefono" name="telefono" value="{{ usuario.telefono }}" required>
+                </div>
+                <div class="mb-3">
+                    <label for="direccion" class="form-label">Dirección</label>
+                    <input type="text" class="form-control" id="direccion" name="direccion" value="{{ usuario.direccion }}" required>
+                </div>
+                <div class="mb-3">
+                    <label for="rol" class="form-label">Rol</label>
+                    <select class="form-select" id="rol" name="rol" required>
+                        <option value="cliente" {% if usuario.rol == 'cliente' or not usuario.rol %}selected{% endif %}>Cliente</option>
+                        <option value="admin" {% if usuario.rol == 'admin' %}selected{% endif %}>Administrador</option>
+                        <option value="inventario" {% if usuario.rol == 'inventario' %}selected{% endif %}>Agente de inventarios</option>
+                        <option value="contabilidad" {% if usuario.rol == 'contabilidad' %}selected{% endif %}>Agente de contabilidad</option>
+                        <option value="proveedor" {% if usuario.rol == 'proveedor' %}selected{% endif %}>Proveedor</option>
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label for="estado" class="form-label">Estado</label>
+                    <select class="form-select" id="estado" name="estado" required>
+                        <option value="activo" {% if usuario.estado == 'activo' %}selected{% endif %}>Activo</option>
+                        <option value="inactivo" {% if usuario.estado == 'inactivo' %}selected{% endif %}>Inactivo</option>
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label for="password" class="form-label">Nueva Contraseña (opcional)</label>
+                    <input type="password" class="form-control" id="password" name="password" autocomplete="new-password">
+                </div>
+                <div class="mb-3 text-end">
+                    <a href="{{ url_for('admin.usuarios') }}" class="btn btn-secondary">Cancelar</a>
+                    <button type="submit" class="btn btn-success">Guardar Cambios</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

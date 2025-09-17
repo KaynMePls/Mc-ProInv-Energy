@@ -1,0 +1,168 @@
+{% extends "base.html" %} {% block content %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+<style>
+    body {
+        background: #18181b;
+        color: #fff;
+    }
+    
+    .detalle-title {
+        color: #ff0033;
+        letter-spacing: 1px;
+        font-weight: bold;
+        text-shadow: 1px 1px 8px #000;
+    }
+    
+    .card {
+        background: #232326;
+        border: none;
+        color: #fff;
+    }
+    
+    .card-header {
+        background: #1a1a1d !important;
+        color: #ff0033 !important;
+        border-bottom: 1px solid #ff0033;
+    }
+    
+    .btn-secondary,
+    .btn-primary,
+    .btn-danger {
+        border-color: #ff0033 !important;
+        background: #232326 !important;
+        color: #ff0033 !important;
+        font-weight: bold;
+        transition: background 0.2s, color 0.2s;
+    }
+    
+    .btn-secondary:hover,
+    .btn-primary:hover,
+    .btn-danger:hover {
+        background: #ff0033 !important;
+        color: #fff !important;
+    }
+    
+    .badge.bg-warning {
+        background: #ff0033 !important;
+        color: #fff !important;
+    }
+    
+    .badge.bg-success {
+        background: #232326 !important;
+        color: #ff0033 !important;
+        border: 1px solid #ff0033;
+    }
+    
+    .badge.bg-danger {
+        background: #1a1a1d !important;
+        color: #ff0033 !important;
+        border: 1px solid #ff0033;
+    }
+    
+    .badge.bg-secondary {
+        background: #232326 !important;
+        color: #ff0033 !important;
+        border: 1px solid #ff0033;
+    }
+    
+    .text-muted {
+        color: #ff0033 !important;
+        opacity: 0.7;
+    }
+</style>
+<div class="container mt-5">
+    <div class="card shadow-sm">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h4 class="mb-0 detalle-title"><i class="bi bi-file-earmark-text"></i> Detalle de Orden </h4>
+            <div>
+                <a href="{{ url_for('admin.editar_orden', orden_id=obj.id) }}" class="btn btn-sm btn-primary me-2">
+                    <i class="bi bi-pencil"></i> Editar
+                </a>
+                <form id="delete-form" action="{{ url_for('admin.eliminar_orden', orden_id=obj.id) }}" method="post" class="d-inline">
+                    <button type="button" id="btn-delete" class="btn btn-sm btn-danger">
+                        <i class="bi bi-trash"></i> Eliminar
+                    </button>
+                </form>
+                <a href="{{ cancel_url or url_for('admin.ordenes') }}" class="btn btn-sm btn-secondary ms-2">
+                    <i class="bi bi-arrow-left-circle"></i> Volver
+                </a>
+            </div>
+        </div>
+
+        <div class="card-body">
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <h6 class="text-muted">Fecha</h6>
+                    <p>{{ obj.fecha.strftime('%d/%m/%Y %H:%M') if obj.fecha else 'N/A' }}</p>
+                </div>
+                <div class="col-md-6">
+                    <h6 class="text-muted">Proveedor</h6>
+                    <p>{{ obj.proveedor.nombre if obj.proveedor else 'N/A' }}</p>
+                </div>
+
+                <div class="col-md-6">
+                    <h6 class="text-muted">Producto</h6>
+                    <p>{{ obj.producto or obj.descripcion or 'N/A' }}</p>
+                </div>
+                <div class="col-md-3">
+                    <h6 class="text-muted">Cantidad</h6>
+                    <p>{{ obj.cantidad if obj.cantidad is not none else 'N/A' }}</p>
+                </div>
+                <div class="col-md-3">
+                    <h6 class="text-muted">Precio unitario</h6>
+                    <p>
+                        {% if obj.precio_unitario is not none %} ${{ "{:,.2f}".format(obj.precio_unitario) }} {% else %} N/A {% endif %}
+                    </p>
+                </div>
+
+                <div class="col-md-6">
+                    <h6 class="text-muted">Total</h6>
+                    <p>
+                        {% if obj.cantidad is not none and obj.precio_unitario is not none %} ${{ "{:,.2f}".format(obj.cantidad * obj.precio_unitario) }} {% else %} N/A {% endif %}
+                    </p>
+                </div>
+                <div class="col-md-6">
+                    <h6 class="text-muted">Estado</h6>
+                    <p>
+                        <span class="badge
+                            {% if obj.estado == 'pendiente' %}bg-warning text-dark
+                            {% elif obj.estado == 'aprobada' %}bg-success
+                            {% elif obj.estado == 'rechazada' %}bg-danger
+                            {% else %}bg-secondary{% endif %}">
+                            {{ obj.estado|capitalize if obj.estado else 'N/A' }}
+                        </span>
+                    </p>
+                </div>
+
+                <div class="col-12">
+                    <h6 class="text-muted">Descripción / Notas</h6>
+                    <p>{{ obj.descripcion or 'Sin descripción' }}</p>
+                </div>
+
+                <div class="col-md-6">
+                    <h6 class="text-muted">Solicitado por</h6>
+                    <p>{{ obj.usuario.nombre if obj.usuario else (obj.usuario_id or 'N/A') }}</p>
+                </div>
+                <div class="col-md-6">
+                    <h6 class="text-muted">ID interno</h6>
+                    <p>{{ obj.id }}</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="card-footer text-end">
+            <a href="{{ cancel_url or url_for('admin.ordenes') }}" class="btn btn-secondary">
+                <i class="bi bi-arrow-left-circle"></i> Volver
+            </a>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.getElementById('btn-delete').addEventListener('click', function() {
+        if (confirm('¿Eliminar esta orden? Esta acción no se puede deshacer.')) {
+            document.getElementById('delete-form').submit();
+        }
+    });
+</script>
+{% endblock %}

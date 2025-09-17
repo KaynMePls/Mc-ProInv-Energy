@@ -1,0 +1,187 @@
+{% extends "base.html" %} {% block content %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+<style>
+    body {
+        background: #18181b;
+        color: #fff;
+    }
+    
+    .usuarios-title {
+        color: #ff0033;
+        letter-spacing: 1px;
+        font-weight: bold;
+        text-shadow: 1px 1px 8px #000;
+    }
+    
+    .card,
+    .table-responsive {
+        background: #232326;
+        border: none;
+        color: #fff;
+    }
+    
+    .btn-secondary,
+    .btn-success {
+        border-color: #ff0033 !important;
+        color: #ff0033 !important;
+        background: #232326 !important;
+        font-weight: bold;
+        transition: background 0.2s, color 0.2s;
+    }
+    
+    .btn-secondary:hover,
+    .btn-success:hover {
+        background: #ff0033 !important;
+        color: #fff !important;
+    }
+    
+    .btn-primary,
+    .btn-danger {
+        border-color: #ff0033 !important;
+        background: #232326 !important;
+        color: #ff0033 !important;
+        font-weight: bold;
+        transition: background 0.2s, color 0.2s;
+    }
+    
+    .btn-primary:hover,
+    .btn-danger:hover {
+        background: #ff0033 !important;
+        color: #fff !important;
+    }
+    
+    .table {
+        background: #232326 !important;
+        color: #fff !important;
+    }
+    
+    .table th,
+    .table td {
+        color: #fff !important;
+        background: #232326 !important;
+        border-color: #ff0033 !important;
+        vertical-align: middle;
+    }
+    
+    .table thead th,
+    .table-light th {
+        background: #1a1a1d !important;
+        color: #ff0033 !important;
+        border-bottom: 2px solid #ff0033 !important;
+    }
+    
+    .table-bordered {
+        border-color: #ff0033 !important;
+    }
+    
+    .table-striped>tbody>tr:nth-of-type(odd) {
+        background-color: #232326 !important;
+    }
+    
+    .table-striped>tbody>tr:nth-of-type(even) {
+        background-color: #18181b !important;
+    }
+    
+    .table-striped>tbody>tr {
+        border-bottom: 1px solid #ff0033 !important;
+    }
+    
+    .badge.bg-primary {
+        background: #ff0033 !important;
+        color: #fff !important;
+    }
+    
+    .badge.bg-info {
+        background: #232326 !important;
+        color: #ff0033 !important;
+        border: 1px solid #ff0033;
+    }
+    
+    .badge.bg-warning {
+        background: #1a1a1d !important;
+        color: #ff0033 !important;
+        border: 1px solid #ff0033;
+    }
+    
+    .badge.bg-secondary {
+        background: #232326 !important;
+        color: #ff0033 !important;
+        border: 1px solid #ff0033;
+    }
+    
+    .alert {
+        background: #232326;
+        color: #ff0033;
+        border-color: #ff0033;
+    }
+    
+    .text-muted,
+    .table .text-muted {
+        color: #ff0033 !important;
+        opacity: 0.7;
+    }
+</style>
+<div class="container mt-4">
+    <h2 class="mb-4 usuarios-title"><i class="bi bi-people"></i> Gestión de Usuarios</h2>
+    {% with messages = get_flashed_messages(with_categories=true) %} {% if messages %} {% for category, message in messages %}
+    <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+        {{ message }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Cerrar"></button>
+    </div>
+    {% endfor %} {% endif %} {% endwith %}
+    <div class="mb-3 d-flex justify-content-between">
+        <a href="{{ url_for('admin.dashboard') }}" class="btn btn-secondary">
+            <i class="bi bi-arrow-left"></i> Volver al Dashboard
+        </a>
+        <a href="{{ url_for('admin.nuevo_usuario') }}" class="btn btn-success">
+            <i class="bi bi-person-plus"></i> Nuevo Usuario
+        </a>
+    </div>
+    <div class="table-responsive">
+        <table class="table table-bordered table-striped align-middle">
+            <thead class="table-light">
+                <tr>
+                    <th>ID</th>
+                    <th>Nombre</th>
+                    <th>Email</th>
+                    <th>Rol</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for usuario in usuarios %}
+                <tr>
+                    <td>{{ usuario.id }}</td>
+                    <td>{{ usuario.nombre }}</td>
+                    <td>{{ usuario.email }}</td>
+                    <td>
+                        <span class="badge 
+                            {% if usuario.rol == 'admin' %}bg-primary
+                            {% elif usuario.rol == 'empleado' %}bg-info
+                            {% elif usuario.rol == 'proveedor' %}bg-warning
+                            {% else %}bg-secondary{% endif %}">
+                            {{ usuario.rol|capitalize }}
+                        </span>
+                    </td>
+                    <td>
+                        <a href="{{ url_for('admin.editar_usuario', usuario_id=usuario.id) }}" class="btn btn-sm btn-primary" title="Editar">
+                            <i class="bi bi-pencil"></i>
+                        </a>
+                        <form action="{{ url_for('admin.eliminar_usuario', usuario_id=usuario.id) }}" method="post" style="display:inline;">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('¿Seguro que deseas eliminar este usuario?');" title="Eliminar">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        </form>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="5" class="text-center text-muted">No hay usuarios registrados.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

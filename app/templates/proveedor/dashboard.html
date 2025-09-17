@@ -181,8 +181,9 @@
                         {% for producto in productos %}
                         <div class="col-md-6 mb-4">
                             <div class="card h-100 border-0 shadow-sm rounded-4">
-                                {% if producto.imagen_url %}
-                                <img src="{{ producto.imagen_url }}" alt="{{ producto.nombre }}" class="card-img-top rounded-top-4" style="height:140px; object-fit:cover;"> {% else %}
+                                {% if producto.imagen_url and (producto.imagen_url.startswith('http://') or producto.imagen_url.startswith('https://')) %}
+                                <img src="{{ producto.imagen_url }}" alt="{{ producto.nombre }}" class="card-img-top rounded-top-4" style="height:140px; object-fit:cover;"> {% elif producto.imagen_url %}
+                                <img src="{{ url_for('static', filename='img_productos/' ~ producto.imagen_url) }}" alt="{{ producto.nombre }}" class="card-img-top rounded-top-4" style="height:140px; object-fit:cover;"> {% else %}
                                 <img src="{{ url_for('static', filename='default-product.png') }}" alt="Sin imagen" class="card-img-top rounded-top-4" style="height:140px; object-fit:cover;"> {% endif %}
                                 <div class="card-body">
                                     <h5 class="fw-bold mb-1 text-primary">{{ producto.nombre }}</h5>

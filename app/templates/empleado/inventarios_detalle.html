@@ -151,10 +151,10 @@
             <a href="{{ url_for('inventarios.productos') }}" class="btn btn-outline-secondary me-2">
                 <i class="bi bi-arrow-left"></i> Volver al listado
             </a>
-            <a href="{{ url_for('inventarios.editar_producto', id=producto.id) }}" class="btn btn-primary me-2">
+            <a href="{{ url_for('inventarios.editar_producto', producto_id=producto.id) }}" class="btn btn-primary me-2">
                 <i class="bi bi-pencil"></i> Editar
             </a>
-            <a href="{{ url_for('inventarios.editar_stock', id=producto.id) }}" class="btn btn-warning me-2">
+            <a href="{{ url_for('inventarios.editar_stock', producto_id=producto.id) }}" class="btn btn-warning me-2">
                 <i class="bi bi-arrow-up-square"></i> Editar Stock
             </a>
         </div>

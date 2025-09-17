@@ -17,7 +17,7 @@ proveedor_bp = Blueprint('proveedor', __name__, url_prefix='/proveedor')
 @login_required
 def dashboard():
     productos = Producto.query.filter_by(proveedor_id=current_user.id).all()
-    ordenes = Compra.query.filter_by(proveedor=current_user.nombre).order_by(Compra.fecha.desc()).all()
+    ordenes = Compra.query.filter(Compra.proveedor.has(nombre=current_user.nombre)).order_by(Compra.fecha.desc()).all()
     ventas_recientes = sum([orden.precio_unitario * orden.cantidad for orden in ordenes]) if ordenes else 0
     return render_template(
         'proveedor/dashboard.html',
@@ -32,17 +32,16 @@ def dashboard():
 def nuevo_producto():
     form = ProductoForm()
     if form.validate_on_submit():
-        # Manejo de imagen: archivo o URL
         imagen_archivo = request.files.get('imagen_archivo')
         imagen_url = form.imagen_url.data.strip()
         imagen_final = None
 
         if imagen_archivo and imagen_archivo.filename != '':
             filename = secure_filename(imagen_archivo.filename)
-            ruta_upload = os.path.join(current_app.static_folder, 'uploads', filename)
+            ruta_upload = os.path.join(current_app.static_folder, 'img_productos', filename)
             os.makedirs(os.path.dirname(ruta_upload), exist_ok=True)
             imagen_archivo.save(ruta_upload)
-            imagen_final = url_for('static', filename=f'uploads/{filename}')
+            imagen_final = filename  # Solo el nombre
         elif imagen_url:
             imagen_final = imagen_url
 
@@ -58,8 +57,9 @@ def nuevo_producto():
         db.session.commit()
         flash('Producto creado exitosamente.', 'success')
         return redirect(url_for('proveedor.dashboard'))
+    else:
+        print(form.errors)  # Para depuración
     return render_template('proveedor/nuevo_producto.html', form=form)
-
 # ruta para editar un producto
 @proveedor_bp.route('/producto/editar/<int:producto_id>', methods=['GET', 'POST'])
 @login_required
@@ -107,7 +107,7 @@ def detalle_producto(producto_id):
 @proveedor_bp.route('/ordenes')
 @login_required
 def ordenes():
-    ordenes = Compra.query.filter_by(proveedor=current_user.nombre).order_by(Compra.fecha.desc()).all()
+    ordenes = Compra.query.filter(Compra.proveedor.has(nombre=current_user.nombre)).order_by(Compra.fecha.desc()).all()
     return render_template('proveedor/ordenes.html', ordenes=ordenes)
 
 # Ruta para ver detalles de una orden
@@ -115,7 +115,7 @@ def ordenes():
 @login_required
 def detalle_orden(orden_id):
     orden = Compra.query.get_or_404(orden_id)
-    if orden.proveedor != current_user.nombre:
+    if orden.proveedor is None or orden.proveedor.nombre != current_user.nombre:
         flash('No tienes permiso para ver esta orden.', 'danger')
         return redirect(url_for('proveedor.ordenes'))
     return render_template('proveedor/detalle_orden.html', orden=orden)

@@ -150,6 +150,14 @@
 <div class="word-style">
     <h1><i class="bi bi-clipboard2-check"></i> Reporte Manual de Inventario</h1>
     <form method="POST" action="{{ url_for('inventarios.reporte_manual') }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <!-- Campos ocultos para el resumen automático -->
+        <input type="hidden" name="total_productos" value="{{ total_productos }}">
+        <input type="hidden" name="valor_inventario" value="{{ valor_inventario }}">
+        <input type="hidden" name="total_categorias" value="{{ total_categorias }}">
+        <input type="hidden" name="total_proveedores" value="{{ total_proveedores }}">
+        <input type="hidden" name="productos_stock_bajo" value="{{ productos_stock_bajo }}">
+        <input type="hidden" name="productos_agotados" value="{{ productos_agotados }}">
         <div class="input-group">
             <label for="responsable"><i class="bi bi-person-circle"></i> Responsable:</label>
             <input type="text" id="responsable" name="responsable" value="{{ responsable }}" onfocus="if(this.value=='{{ responsable }}'){this.value='';}" autocomplete="off" />
@@ -206,7 +214,9 @@
         </p>
         <textarea class="form-control mb-3" rows="12" name="reporte_manual" placeholder="Escribe aquí tu reporte manual..."></textarea>
         <div class="text-end">
-            <a href="{{ url_for('inventarios.exportar_pdf_reporte_manual') }}">Descargar PDF</a>
+            <button type="submit" formaction="{{ url_for('inventarios.exportar_pdf_reporte_manual') }}" formmethod="post" class="btn btn-danger">
+                <i class="bi bi-file-earmark-pdf"></i> Descargar PDF
+            </button>
             <a href="{{ url_for('inventarios.reporte') }}" class="btn btn-secondary">Volver al reporte automático</a>
         </div>
     </form>

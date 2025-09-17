@@ -1,0 +1,181 @@
+{% extends "base.html" %} {% block content %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+<style>
+    body {
+        background: #18181b;
+        color: #fff;
+    }
+    
+    .ordenes-title {
+        color: #ff0033;
+        letter-spacing: 1px;
+        font-weight: bold;
+        text-shadow: 1px 1px 8px #000;
+    }
+    
+    .btn-outline-secondary,
+    .btn-success {
+        border-color: #ff0033 !important;
+        color: #ff0033 !important;
+        background: #232326 !important;
+        font-weight: bold;
+        transition: background 0.2s, color 0.2s;
+    }
+    
+    .btn-outline-secondary:hover,
+    .btn-success:hover {
+        background: #ff0033 !important;
+        color: #fff !important;
+    }
+    
+    .btn-primary,
+    .btn-warning,
+    .btn-danger {
+        border-color: #ff0033 !important;
+        background: #232326 !important;
+        color: #ff0033 !important;
+        font-weight: bold;
+        transition: background 0.2s, color 0.2s;
+    }
+    
+    .btn-primary:hover,
+    .btn-warning:hover,
+    .btn-danger:hover {
+        background: #ff0033 !important;
+        color: #fff !important;
+    }
+    
+    .table {
+        background: #232326 !important;
+        color: #fff !important;
+    }
+    
+    .table th,
+    .table td {
+        color: #fff !important;
+        background: #232326 !important;
+        border-color: #ff0033 !important;
+        vertical-align: middle;
+    }
+    
+    .table thead th,
+    .table-light th {
+        background: #1a1a1d !important;
+        color: #ff0033 !important;
+        border-bottom: 2px solid #ff0033 !important;
+    }
+    
+    .table-bordered {
+        border-color: #ff0033 !important;
+    }
+    
+    .table-hover tbody tr:hover {
+        background: #2d2d31 !important;
+    }
+    
+    .table-striped>tbody>tr:nth-of-type(odd) {
+        background-color: #232326 !important;
+    }
+    
+    .table-striped>tbody>tr:nth-of-type(even) {
+        background-color: #18181b !important;
+    }
+    
+    .table-striped>tbody>tr {
+        border-bottom: 1px solid #ff0033 !important;
+    }
+    
+    .badge.bg-warning {
+        background: #ff0033 !important;
+        color: #fff !important;
+    }
+    
+    .badge.bg-success {
+        background: #232326 !important;
+        color: #ff0033 !important;
+        border: 1px solid #ff0033;
+    }
+    
+    .badge.bg-danger {
+        background: #1a1a1d !important;
+        color: #ff0033 !important;
+        border: 1px solid #ff0033;
+    }
+    
+    .badge.bg-secondary {
+        background: #232326 !important;
+        color: #ff0033 !important;
+        border: 1px solid #ff0033;
+    }
+    
+    .text-muted,
+    .table .text-muted {
+        color: #ff0033 !important;
+        opacity: 0.7;
+    }
+</style>
+<div class="container mt-5">
+    <h2 class="mb-4 ordenes-title"><i class="bi bi-list-check"></i> Órdenes registradas</h2>
+    <div class="mb-3 d-flex justify-content-between align-items-center">
+        <a href="{{ url_for('admin.dashboard') }}" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left-circle"></i> Volver al Dashboard
+        </a>
+        <a href="{{ url_for('admin.nueva_orden') }}" class="btn btn-success">
+            <i class="bi bi-plus-circle"></i> Nueva Orden
+        </a>
+    </div>
+    <div class="table-responsive">
+        <table class="table table-bordered table-hover table-striped align-middle">
+            <thead class="table-light">
+                <tr>
+                    <th>ID</th>
+                    <th>Fecha</th>
+                    <th>Proveedor</th>
+                    <th>Estado</th>
+                    <th>Total</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for orden in ordenes %}
+                <tr>
+                    <td>{{ orden.id }}</td>
+                    <td>{{ orden.fecha.strftime('%d/%m/%Y %H:%M') }}</td>
+                    <td>{{ orden.proveedor.nombre if orden.proveedor else 'N/A' }}</td>
+                    <td>
+                        <span class="badge 
+                            {% if orden.estado == 'pendiente' %}bg-warning text-dark
+                            {% elif orden.estado == 'aprobada' %}bg-success
+                            {% elif orden.estado == 'rechazada' %}bg-danger
+                            {% else %}bg-secondary{% endif %}">
+                            {{ orden.estado|capitalize }}
+                        </span>
+                    </td>
+                    <td>
+                        {% if orden.cantidad is not none and orden.precio_unitario is not none %} ${{ "{:,.2f}".format(orden.cantidad * orden.precio_unitario) }} {% else %} N/A {% endif %}
+                    </td>
+                    <td>
+                        <a href="{{ url_for('admin.detalle_orden', orden_id=orden.id) }}" class="btn btn-sm btn-primary" title="Ver detalle">
+                            <i class="bi bi-eye"></i>
+                        </a>
+                        <a href="{{ url_for('admin.editar_orden', orden_id=orden.id) }}" class="btn btn-sm btn-warning" title="Editar">
+                            <i class="bi bi-pencil"></i>
+                        </a>
+                        <form action="{{ url_for('admin.eliminar_orden', orden_id=orden.id) }}" method="post" style="display:inline;">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <button type="submit" class="btn btn-sm btn-danger" title="Eliminar" onclick="return confirm('¿Eliminar esta orden?');">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        </form>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="6" class="text-center text-muted">No hay órdenes registradas.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

@@ -4,9 +4,10 @@ from app.models import Producto, CategoriaComponente, Usuario, MovimientoStock
 from app.forms import ProductoForm
 from app import db
 from werkzeug.utils import secure_filename
-import os
+from io import BytesIO
 from datetime import datetime, timedelta
 import io
+import os
 import pandas as pd
 from reportlab.lib.pagesizes import letter, landscape
 from reportlab.pdfgen import canvas
@@ -16,6 +17,7 @@ from reportlab.lib import colors
 from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from datetime import datetime
+
 
 
 inventarios_bp = Blueprint('inventarios', __name__, url_prefix='/inventarios')
@@ -125,14 +127,14 @@ def nuevo_producto():
         # Limpiar y convertir precio
         precio_limpio = float(precio.replace('.', '').replace(',', '.'))
 
-        # Guardar imagen
+        # Guardar imagen en la carpeta correcta y guardar solo el nombre
         imagen_url = None
         if imagen and imagen.filename != '':
             filename = secure_filename(imagen.filename)
-            ruta_upload = os.path.join('app', 'static', 'uploads', filename)
+            ruta_upload = os.path.join('app', 'static', 'img_productos', filename)
             os.makedirs(os.path.dirname(ruta_upload), exist_ok=True)
             imagen.save(ruta_upload)
-            imagen_url = url_for('static', filename=f'uploads/{filename}')
+            imagen_url = filename  # Solo el nombre
 
         producto = Producto(
             nombre=nombre,
@@ -152,13 +154,14 @@ def nuevo_producto():
         flash('Producto agregado exitosamente.', 'success')
         return redirect(url_for('inventarios.productos'))
 
+    cancel_url = request.args.get('cancel_url') or url_for('inventarios.productos')
     return render_template(
         'empleado/inventarios_agregar.html',
         categorias=categorias,
         proveedores=proveedores,
-        sku_sugerido=sku_sugerido
+        sku_sugerido=sku_sugerido,
+        cancel_url=cancel_url
     )
-
 # Editar producto existente
 @inventarios_bp.route('/producto/editar/<int:producto_id>', methods=['GET', 'POST'])
 @login_required
@@ -166,6 +169,9 @@ def editar_producto(producto_id):
     producto = Producto.query.get_or_404(producto_id)
     categorias = CategoriaComponente.query.all()
     proveedores = Usuario.query.filter_by(rol='proveedor').all()
+
+    cancel_url = request.args.get('cancel_url') or url_for('inventarios.productos')
+
 
     if request.method == 'POST':
         producto.nombre = request.form['nombre']
@@ -191,14 +197,16 @@ def editar_producto(producto_id):
 
         db.session.commit()
         flash('Producto actualizado correctamente.', 'success')
-        return redirect(url_for('inventarios.productos'))
+        return redirect(cancel_url)  
 
     return render_template(
         'empleado/inventarios_editar.html',
         producto=producto,
         categorias=categorias,
-        proveedores=proveedores
+        proveedores=proveedores,
+        cancel_url=cancel_url
     )
+        
 
 # Editar solo el stock de un producto
 @inventarios_bp.route('/producto/editar_stock/<int:producto_id>', methods=['GET', 'POST'])
@@ -252,6 +260,7 @@ def reporte():
     categoria_top = next((c for c in categorias if c.id == categoria_top_id), None)
     if categoria_top:
         categoria_top.cantidad = categoria_top_count
+
     proveedor_counter = Counter([p.proveedor_id for p in productos if p.proveedor_id])
     proveedor_top_id, proveedor_top_count = (proveedor_counter.most_common(1)[0] if proveedor_counter else (None, 0))
     proveedor_top = next((u for u in usuarios if u.id == proveedor_top_id), None)
@@ -530,28 +539,56 @@ def eliminar_producto(producto_id):
 @inventarios_bp.route('/exportar_pdf_reporte_general')
 @login_required
 def exportar_pdf_reporte_general():
-    # Obtén los datos que usas en el template del reporte general
-    productos_criticos = ...  # Lista de productos críticos
-    recomendaciones = ...     # Lista de recomendaciones
-    fecha_reporte = datetime.now().strftime('%d/%m/%Y %H:%M')
+    from reportlab.lib.pagesizes import letter, landscape
+    from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
+    from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+    from reportlab.lib import colors
 
-    # Encabezados de la tabla
-    headers = ["Nombre", "Categoría", "Proveedor", "Stock", "Estado"]
+    productos = Producto.query.filter_by(publicado=True).all()
+    categorias = CategoriaComponente.query.all()
+    usuarios = Usuario.query.all()
+    total_productos = len(productos)
+    valor_inventario = sum(float(p.precio or 0) * float(p.stock or 0) for p in productos)
+    total_categorias = len({p.categoria_id for p in productos if p.categoria_id})
+    total_proveedores = len({p.proveedor_id for p in productos if p.proveedor_id})
+    productos_stock_bajo = sum(1 for p in productos if p.stock is not None and p.stock_minimo is not None and p.stock <= p.stock_minimo)
+    productos_agotados = sum(1 for p in productos if p.stock == 0)
+    productos_sin_proveedor = sum(1 for p in productos if not p.proveedor_id)
+    productos_sin_categoria = sum(1 for p in productos if not p.categoria_id)
+    producto_mayor_stock = max(productos, key=lambda p: p.stock or 0, default=None)
+    producto_menor_stock = min(productos, key=lambda p: p.stock if p.stock is not None else float('inf'), default=None)
+    producto_mas_caro = max(productos, key=lambda p: p.precio or 0, default=None)
+    producto_mas_barato = min(productos, key=lambda p: p.precio if p.precio is not None else float('inf'), default=None)
+    from collections import Counter
+    categoria_counter = Counter([p.categoria_id for p in productos if p.categoria_id])
+    categoria_top_id, categoria_top_count = (categoria_counter.most_common(1)[0] if categoria_counter else (None, 0))
+    categoria_top = next((c for c in categorias if c.id == categoria_top_id), None)
+    if categoria_top:
+        categoria_top.cantidad = categoria_top_count
+
+    proveedor_counter = Counter([p.proveedor_id for p in productos if p.proveedor_id])
+    proveedor_top_id, proveedor_top_count = (proveedor_counter.most_common(1)[0] if proveedor_counter else (None, 0))
+    proveedor_top = next((u for u in usuarios if u.id == proveedor_top_id), None)
+    if proveedor_top:
+        proveedor_top.cantidad = proveedor_top_count
+    productos_criticos = [p for p in productos if (p.stock is not None and p.stock <= (p.stock_minimo or 5))]
+    recomendaciones = []
+    if productos_stock_bajo > 0:
+        recomendaciones.append("Revisar y reabastecer los productos con stock bajo para evitar quiebres de inventario.")
+    if productos_agotados > 0:
+        recomendaciones.append("Solicitar reposición urgente de productos agotados.")
+    if productos_sin_proveedor > 0:
+        recomendaciones.append("Asignar proveedor a los productos que no lo tienen.")
+    if productos_sin_categoria > 0:
+        recomendaciones.append("Clasificar los productos sin categoría para mejorar la gestión.")
+    if not recomendaciones:
+        recomendaciones.append("El inventario se encuentra en condiciones óptimas.")
+    fecha_reporte = datetime.now().strftime("%d/%m/%Y %H:%M")
 
     # Estilos
     styles = getSampleStyleSheet()
     cell_style = ParagraphStyle('cell_style', parent=styles['Normal'], fontSize=8, leading=10, alignment=1)
-
-    # Construye los datos de la tabla
-    data = [headers]
-    for p in productos_criticos:
-        data.append([
-            Paragraph(p.nombre or '', cell_style),
-            Paragraph(p.categoria.nombre if p.categoria else 'Sin categoría', cell_style),
-            Paragraph(p.proveedor.nombre if p.proveedor else 'Sin proveedor', cell_style),
-            str(p.stock),
-            Paragraph(p.estado.capitalize() if p.estado else '', cell_style)
-        ])
+    desc_style = ParagraphStyle('desc_style', parent=styles['Normal'], fontSize=8, leading=10, alignment=0)
 
     output = io.BytesIO()
     doc = SimpleDocTemplate(
@@ -563,13 +600,61 @@ def exportar_pdf_reporte_general():
         bottomMargin=20
     )
     elements = []
+
+    # Título y fecha
     title = Paragraph("<b>Reporte General de Inventario</b>", styles['Title'])
     fecha = Paragraph(f"Generado: {fecha_reporte}", styles['Normal'])
     elements.append(title)
     elements.append(fecha)
     elements.append(Spacer(1, 12))
 
+    # KPIs y resumen
+    resumen = Paragraph(
+        f"<b>Total productos:</b> {total_productos} &nbsp;&nbsp; "
+        f"<b>Valor inventario:</b> ${valor_inventario:,.0f} &nbsp;&nbsp; "
+        f"<b>Categorías:</b> {total_categorias} &nbsp;&nbsp; "
+        f"<b>Proveedores:</b> {total_proveedores} &nbsp;&nbsp; "
+        f"<b>Stock bajo:</b> {productos_stock_bajo} &nbsp;&nbsp; "
+        f"<b>Agotados:</b> {productos_agotados} &nbsp;&nbsp; "
+        f"<b>Sin proveedor:</b> {productos_sin_proveedor} &nbsp;&nbsp; "
+        f"<b>Sin categoría:</b> {productos_sin_categoria}",
+        styles['Normal']
+    )
+    elements.append(resumen)
+    elements.append(Spacer(1, 8))
+
+    # Productos destacados
+    destacados = []
+    if producto_mayor_stock:
+        destacados.append(f"Producto con mayor stock: {producto_mayor_stock.nombre} ({producto_mayor_stock.stock})")
+    if producto_menor_stock:
+        destacados.append(f"Producto con menor stock: {producto_menor_stock.nombre} ({producto_menor_stock.stock})")
+    if producto_mas_caro:
+        destacados.append(f"Producto más caro: {producto_mas_caro.nombre} (${producto_mas_caro.precio:,.2f})")
+    if producto_mas_barato:
+        destacados.append(f"Producto más barato: {producto_mas_barato.nombre} (${producto_mas_barato.precio:,.2f})")
+    if categoria_top:
+        destacados.append(f"Categoría con más productos: {categoria_top.nombre} ({categoria_top.cantidad})")
+    if proveedor_top:
+        destacados.append(f"Proveedor con más productos: {proveedor_top.nombre} ({proveedor_top.cantidad})")
+    if destacados:
+        elements.append(Paragraph("<b>Indicadores destacados</b>", styles['Heading3']))
+        for d in destacados:
+            elements.append(Paragraph(f"- {d}", styles['Normal']))
+        elements.append(Spacer(1, 8))
+
     # Tabla de productos críticos
+    elements.append(Paragraph("<b>Productos críticos</b>", styles['Heading3']))
+    headers = ["Nombre", "Categoría", "Proveedor", "Stock", "Estado"]
+    data = [headers]
+    for p in productos_criticos:
+        data.append([
+            Paragraph(p.nombre or '', cell_style),
+            Paragraph(p.categoria.nombre if p.categoria else 'Sin categoría', cell_style),
+            Paragraph(p.proveedor.nombre if p.proveedor else 'Sin proveedor', cell_style),
+            str(p.stock),
+            Paragraph(p.estado.capitalize() if p.estado else '', cell_style)
+        ])
     col_widths = [100, 80, 80, 40, 60]
     table = Table(data, colWidths=col_widths, repeatRows=1)
     table.setStyle(TableStyle([
@@ -592,18 +677,37 @@ def exportar_pdf_reporte_general():
     elements.append(Paragraph("<b>Recomendaciones</b>", styles['Heading3']))
     for rec in recomendaciones:
         elements.append(Paragraph(f"- {rec}", styles['Normal']))
+    elements.append(Spacer(1, 18))
+
+    # Cierre profesional
+    cierre = Paragraph(
+        "Este reporte ha sido generado automáticamente por el sistema de gestión de inventarios MC Proinv.<br/>"
+        "Para cualquier consulta adicional, contacte al área de operaciones o tecnología.",
+        styles['Normal']
+    )
+    elements.append(cierre)
 
     doc.build(elements)
     output.seek(0)
     return send_file(output, download_name="reporte_general_inventario.pdf", as_attachment=True, mimetype='application/pdf')
 
-
 @inventarios_bp.route('/exportar_excel_reporte_general')
 @login_required
 def exportar_excel_reporte_general():
-    # Obtén los datos que usas en el template del reporte general
-    productos_criticos = ...  # Lista de productos críticos
-    recomendaciones = ...     # Lista de recomendaciones
+    import openpyxl
+    from openpyxl.styles import Font, Alignment, PatternFill, Border, Side
+
+    productos = Producto.query.filter_by(publicado=True).all()
+    productos_criticos = [p for p in productos if (p.stock is not None and p.stock <= (p.stock_minimo or 5))]
+    recomendaciones = []
+    productos_stock_bajo = sum(1 for p in productos if p.stock is not None and p.stock_minimo is not None and p.stock <= p.stock_minimo)
+    productos_agotados = sum(1 for p in productos if p.stock == 0)
+    if productos_stock_bajo > 0:
+        recomendaciones.append("Revisar y reabastecer los productos con stock bajo para evitar quiebres de inventario.")
+    if productos_agotados > 0:
+        recomendaciones.append("Solicitar reposición urgente de productos agotados.")
+    if not recomendaciones:
+        recomendaciones.append("El inventario se encuentra en condiciones óptimas.")
 
     headers = ["Nombre", "Categoría", "Proveedor", "Stock", "Estado"]
 
@@ -664,101 +768,6 @@ def exportar_excel_reporte_general():
         as_attachment=True,
         mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
     )
-
-@inventarios_bp.route('/exportar_pdf_reporte_manual')
-@login_required
-def exportar_pdf_reporte_manual():
-    # Obtén los datos igual que en la vista reporte_manual
-    productos = Producto.query.filter_by(publicado=True).all()
-    total_productos = len(productos)
-    valor_inventario = sum(float(p.precio or 0) * float(p.stock or 0) for p in productos)
-    total_categorias = len({p.categoria_id for p in productos if p.categoria_id})
-    total_proveedores = len({p.proveedor_id for p in productos if p.proveedor_id})
-    productos_stock_bajo = sum(1 for p in productos if p.stock is not None and p.stock_minimo is not None and p.stock <= p.stock_minimo)
-    productos_agotados = sum(1 for p in productos if p.stock == 0)
-    productos_criticos = [p for p in productos if (p.stock is not None and p.stock <= (p.stock_minimo or 5))]
-    recomendaciones = []
-    if productos_stock_bajo > 0:
-        recomendaciones.append("Revisar y reabastecer los productos con stock bajo para evitar quiebres de inventario.")
-    if productos_agotados > 0:
-        recomendaciones.append("Solicitar reposición urgente de productos agotados.")
-    if not recomendaciones:
-        recomendaciones.append("El inventario se encuentra en condiciones óptimas.")
-    responsable = current_user.nombre if hasattr(current_user, 'nombre') else current_user.username
-    fecha_actual = datetime.now().strftime("%d/%m/%Y %H:%M")
-
-    # Estilos
-    styles = getSampleStyleSheet()
-    cell_style = ParagraphStyle('cell_style', parent=styles['Normal'], fontSize=8, leading=10, alignment=1)
-
-    # Encabezados de la tabla
-    headers = ["Nombre", "Categoría", "Proveedor", "Stock", "Estado"]
-
-    # Construye los datos de la tabla
-    data = [headers]
-    for p in productos_criticos:
-        data.append([
-            Paragraph(p.nombre or '', cell_style),
-            Paragraph(p.categoria.nombre if p.categoria else 'Sin categoría', cell_style),
-            Paragraph(p.proveedor.nombre if p.proveedor else 'Sin proveedor', cell_style),
-            str(p.stock),
-            Paragraph(p.estado.capitalize() if p.estado else '', cell_style)
-        ])
-
-    output = io.BytesIO()
-    doc = SimpleDocTemplate(
-        output,
-        pagesize=landscape(letter),
-        leftMargin=20,
-        rightMargin=20,
-        topMargin=30,
-        bottomMargin=20
-    )
-    elements = []
-    title = Paragraph("<b>Reporte Manual de Inventario</b>", styles['Title'])
-    fecha = Paragraph(f"Responsable: {responsable} &nbsp;&nbsp;&nbsp; Fecha: {fecha_actual}", styles['Normal'])
-    resumen = Paragraph(
-        f"<b>Total productos:</b> {total_productos} &nbsp;&nbsp; "
-        f"<b>Valor inventario:</b> ${valor_inventario:,.0f} &nbsp;&nbsp; "
-        f"<b>Categorías:</b> {total_categorias} &nbsp;&nbsp; "
-        f"<b>Proveedores:</b> {total_proveedores} &nbsp;&nbsp; "
-        f"<b>Stock bajo:</b> {productos_stock_bajo} &nbsp;&nbsp; "
-        f"<b>Agotados:</b> {productos_agotados}",
-        styles['Normal']
-    )
-    elements.append(title)
-    elements.append(fecha)
-    elements.append(Spacer(1, 8))
-    elements.append(resumen)
-    elements.append(Spacer(1, 12))
-
-    # Tabla de productos críticos
-    col_widths = [100, 80, 80, 40, 60]
-    table = Table(data, colWidths=col_widths, repeatRows=1)
-    table.setStyle(TableStyle([
-        ('BACKGROUND', (0,0), (-1,0), colors.HexColor('#1976D2')),
-        ('TEXTCOLOR', (0,0), (-1,0), colors.white),
-        ('ALIGN', (0,0), (-1,-1), 'CENTER'),
-        ('FONTNAME', (0,0), (-1,0), 'Helvetica-Bold'),
-        ('FONTSIZE', (0,0), (-1,0), 10),
-        ('FONTSIZE', (0,1), (-1,-1), 8),
-        ('BOTTOMPADDING', (0,0), (-1,0), 8),
-        ('TOPPADDING', (0,0), (-1,0), 8),
-        ('GRID', (0,0), (-1,-1), 0.5, colors.HexColor('#38404a')),
-        ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
-        ('ROWBACKGROUNDS', (0,1), (-1,-1), [colors.whitesmoke, colors.lightgrey])
-    ]))
-    elements.append(table)
-    elements.append(Spacer(1, 18))
-
-    # Recomendaciones
-    elements.append(Paragraph("<b>Recomendaciones</b>", styles['Heading3']))
-    for rec in recomendaciones:
-        elements.append(Paragraph(f"- {rec}", styles['Normal']))
-
-    doc.build(elements)
-    output.seek(0)
-    return send_file(output, download_name="reporte_manual_inventario.pdf", as_attachment=True, mimetype='application/pdf')
 
 
 @inventarios_bp.route('/exportar_excel_reporte_manual')
@@ -857,3 +866,110 @@ def exportar_excel_reporte_manual():
         as_attachment=True,
         mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
     )
+
+@inventarios_bp.route('/reporte/manual/pdf', methods=['POST'])
+@login_required
+def exportar_pdf_reporte_manual():
+    responsable = request.form.get('responsable', 'No especificado')
+    fecha = request.form.get('fecha', '')
+    resumen = {
+        'total_productos': request.form.get('total_productos', ''),
+        'valor_inventario': request.form.get('valor_inventario', ''),
+        'total_categorias': request.form.get('total_categorias', ''),
+        'total_proveedores': request.form.get('total_proveedores', ''),
+        'productos_stock_bajo': request.form.get('productos_stock_bajo', ''),
+        'productos_agotados': request.form.get('productos_agotados', ''),
+    }
+    recomendaciones = request.form.getlist('recomendaciones')
+    if not recomendaciones or isinstance(recomendaciones, str):
+        recomendaciones = request.form.get('recomendaciones', '').splitlines()
+    from app.models import Producto
+    productos_criticos = Producto.query.filter(Producto.stock < 5).all()
+    reporte_manual = request.form.get('reporte_manual', '')
+
+    buffer = BytesIO()
+    width, height = letter
+
+    # Usar platypus para mejor control de tablas y textos
+    from reportlab.platypus import SimpleDocTemplate, Spacer
+    doc = SimpleDocTemplate(buffer, pagesize=letter, leftMargin=40, rightMargin=40, topMargin=40, bottomMargin=40)
+    elements = []
+    styles = getSampleStyleSheet()
+    normal = styles['Normal']
+    bold = styles['Heading2']
+    bold.fontSize = 14
+
+    # Título
+    elements.append(Paragraph("<b>Reporte Manual de Inventario</b>", styles['Title']))
+    elements.append(Spacer(1, 12))
+
+    # Responsable y fecha
+    elements.append(Paragraph(f"<b>Responsable:</b> {responsable} &nbsp;&nbsp;&nbsp;&nbsp; <b>Fecha:</b> {fecha}", normal))
+    elements.append(Spacer(1, 8))
+    elements.append(Paragraph("<hr width='100%'/>", normal))
+
+    # Resumen Automático
+    elements.append(Paragraph("<b>Resumen Automático:</b>", bold))
+    resumen_html = (
+        f"<b>Total productos:</b> {resumen['total_productos']}<br/>"
+        f"<b>Valor inventario:</b> {resumen['valor_inventario']}<br/>"
+        f"<b>Categorías:</b> {resumen['total_categorias']}<br/>"
+        f"<b>Proveedores:</b> {resumen['total_proveedores']}<br/>"
+        f"<b>Productos con stock bajo:</b> {resumen['productos_stock_bajo']}<br/>"
+        f"<b>Productos agotados:</b> {resumen['productos_agotados']}"
+    )
+    elements.append(Paragraph(resumen_html, normal))
+    elements.append(Spacer(1, 10))
+
+    # Recomendaciones automáticas
+    if recomendaciones and any(r.strip() for r in recomendaciones):
+        elements.append(Paragraph("<b>Recomendaciones automáticas:</b>", bold))
+        for rec in recomendaciones:
+            if rec.strip():
+                elements.append(Paragraph(f"- {rec}", normal))
+        elements.append(Spacer(1, 10))
+
+    # Productos críticos (tabla)
+    elements.append(Paragraph("<b>Productos críticos:</b>", bold))
+    table_data = [[
+        "Nombre", "Categoría", "Proveedor", "Stock", "Estado", "Precio"
+    ]]
+    cell_style = ParagraphStyle('cell_style', parent=styles['Normal'], fontSize=9, leading=11)
+    for prod in productos_criticos:
+        table_data.append([
+            Paragraph(prod.nombre, cell_style),
+            Paragraph(prod.categoria.nombre if prod.categoria else "Sin categoría", cell_style),
+            Paragraph(str(prod.proveedor_id), cell_style),
+            Paragraph(str(prod.stock), cell_style),
+            Paragraph(prod.estado, cell_style),
+            Paragraph(f"${prod.precio:,.0f}".replace(",", "."), cell_style),
+        ])
+    col_widths = [90, 80, 60, 40, 50, 60]
+    table = Table(table_data, colWidths=col_widths, repeatRows=1)
+    table.setStyle(TableStyle([
+        ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor("#1976d2")),
+        ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
+        ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+        ('FONTSIZE', (0, 0), (-1, 0), 10),
+        ('BOTTOMPADDING', (0, 0), (-1, 0), 8),
+        ('BACKGROUND', (0, 1), (-1, -1), colors.HexColor("#f8fafc")),
+        ('GRID', (0, 0), (-1, -1), 1, colors.black),
+        ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+    ]))
+    elements.append(table)
+    elements.append(Spacer(1, 18))
+
+    # Redacción del reporte manual
+    elements.append(Paragraph("<b>Redacción del reporte manual:</b>", bold))
+    for line in reporte_manual.splitlines():
+        elements.append(Paragraph(line, normal))
+    elements.append(Spacer(1, 12))
+
+    # Pie de página
+    elements.append(Spacer(1, 20))
+    elements.append(Paragraph("<font size=9><i>Generado por MC-PROINV ENERGY</i></font>", normal))
+
+    doc.build(elements)
+    buffer.seek(0)
+    return send_file(buffer, as_attachment=True, download_name="reporte_manual.pdf", mimetype='application/pdf')

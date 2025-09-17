@@ -4,6 +4,8 @@ from flask_login import UserMixin
 from decimal import Decimal
 import mysql.connector
 from flask import current_app
+from werkzeug.security import generate_password_hash
+
 
 # ✅ Modelo Usuario
 class Usuario(db.Model, UserMixin):
@@ -21,6 +23,12 @@ class Usuario(db.Model, UserMixin):
     estado = db.Column(db.String(10), default='activo') 
     fecha_registro = db.Column(db.DateTime, default=datetime.utcnow)
 
+    def set_password(self, password):
+        self.password = generate_password_hash(
+            password,
+            method='scrypt',
+            salt_length=16
+        )
     def __repr__(self):
         return f'<Usuario {self.documento}>'
 
@@ -210,13 +218,14 @@ class Compra(db.Model):
     __tablename__ = 'compras'
 
     id = db.Column(db.Integer, primary_key=True)
-    proveedor = db.Column(db.String(100), nullable=False)
+    proveedor_id = db.Column(db.Integer, db.ForeignKey('usuarios.id'), nullable=False)
+    proveedor = db.relationship('Usuario', foreign_keys=[proveedor_id])
     producto = db.Column(db.String(100), nullable=False)
     cantidad = db.Column(db.Integer, nullable=False)
     precio_unitario = db.Column(db.Numeric(10, 2), nullable=False)
     fecha = db.Column(db.DateTime, default=datetime.utcnow)
     usuario_id = db.Column(db.Integer, db.ForeignKey('usuarios.id'), nullable=False)
-    usuario = db.relationship('Usuario')
+    usuario = db.relationship('Usuario', foreign_keys=[usuario_id])
     estado = db.Column(db.Enum('pendiente', 'aprobada', 'rechazada'), default='pendiente', nullable=False)
 
     def __repr__(self):
